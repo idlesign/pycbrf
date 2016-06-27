@@ -7,10 +7,10 @@ python:
   - 2.7
 
 install:
-  - pip install -U pytest pytest-cov
+  - pip install pytest coveralls
 
 script:
-  - py.test
+  - coverage run --source=pycbrf setup.py test
 
 after_success:
-  coveralls
+  - coveralls
