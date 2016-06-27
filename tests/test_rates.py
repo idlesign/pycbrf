@@ -1,6 +1,6 @@
 # -*- encoding: utf8 -*-
 import pytest
-from pycbrf.rates import ExchangeRates
+from pycbrf.toolbox import ExchangeRates
 
 
 def test_rates():
