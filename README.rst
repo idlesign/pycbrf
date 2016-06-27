@@ -11,6 +11,15 @@ https://github.com/idlesign/pycbrf
 .. image:: https://img.shields.io/pypi/l/pycbrf.svg
     :target: https://pypi.python.org/pypi/pycbrf
 
+.. image:: https://img.shields.io/coveralls/idlesign/pycbrf/master.svg
+    :target: https://coveralls.io/r/idlesign/pycbrf
+
+.. image:: https://img.shields.io/travis/idlesign/pycbrf/master.svg
+    :target: https://travis-ci.org/idlesign/dpycbrf
+
+.. image:: https://landscape.io/github/idlesign/pycbrf/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/idlesign/pycbrf/master
+
 
 Description
 -----------
