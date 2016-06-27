@@ -1,0 +1,17 @@
+language: python
+
+python:
+  - 3.5
+  - 3.4
+  - 3.3
+  - 2.7
+  - 2.6
+
+install:
+  - pip install -U pytest pytest-cov
+
+script:
+  - py.test
+
+after_success:
+  coveralls
