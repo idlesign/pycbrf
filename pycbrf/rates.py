@@ -131,7 +131,7 @@ class ExchangeRates(object):
                 'rate': par_value / par,
             }))
 
-        LOG.debug('Parsed: %d currencies' % len(result['rates']))
+        LOG.debug('Parsed: %d currencies', len(result['rates']))
 
         return result
 
@@ -143,7 +143,7 @@ class ExchangeRates(object):
         if on_date:
             url += '?date_req=%s' % on_date.strftime('%d/%m/%Y')
 
-        LOG.debug('Getting exchange rates from %s ...' % url)
+        LOG.debug('Getting exchange rates from %s ...', url)
 
         response = urlopen(url)
         data = response.read()
