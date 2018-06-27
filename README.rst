@@ -34,7 +34,7 @@ Provides methods to get the following information:
 Requirements
 ------------
 
-* Python 2.7, 3.2+
+* Python 2.7, 3.4+
 
 
 Getting Exchange Rates

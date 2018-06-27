@@ -1,6 +1,12 @@
 pycbrf changelog
 ================
 
+
+Unreleased
+----------
+* Dropped QA for py3.3, added for py3.6.
+
+
 v0.1.0
 ------
 + Basic functionality.
