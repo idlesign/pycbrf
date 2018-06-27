@@ -4,6 +4,7 @@ pycbrf changelog
 
 Unreleased
 ----------
+! Added dependency 'requests'.
 ! CLI. Added dependency 'click'.
 + CLI. Improved Windows compatibility.
 * CLI. Improved py2 compatibility.

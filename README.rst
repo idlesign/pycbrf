@@ -35,6 +35,8 @@ Requirements
 ------------
 
 * Python 2.7, 3.4+
+* `requests` package
+* `click` package for CLI
 
 
 Getting Exchange Rates

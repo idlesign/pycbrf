@@ -1,16 +1,13 @@
 # -*- encoding: utf8 -*-
 from __future__ import division
+
 from collections import namedtuple
 from xml.etree import ElementTree
 from logging import getLogger
 from datetime import datetime
 from decimal import Decimal
 
-try:
-    from urllib.request import urlopen
-
-except ImportError:  # Py2
-    from urllib2 import urlopen
+import requests
 
 
 from .utils import string_types
@@ -147,7 +144,7 @@ class ExchangeRates(object):
 
         LOG.debug('Getting exchange rates from %s ...', url)
 
-        response = urlopen(url)
-        data = response.read()
+        response = requests.get(url)
+        data = response.text
 
         return data

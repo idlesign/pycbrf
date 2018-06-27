@@ -40,7 +40,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
 
-    install_requires=[],
+    install_requires=[
+        'requests',
+    ],
     setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
     tests_require=['pytest'],
     extras_require={
