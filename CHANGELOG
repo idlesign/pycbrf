@@ -9,6 +9,7 @@ Unreleased
 + CLI. Improved Windows compatibility.
 * CLI. Improved py2 compatibility.
 * Dropped QA for py3.3, added for py3.6.
+* ExchangeRates now importable from package root.
 
 
 v0.1.0

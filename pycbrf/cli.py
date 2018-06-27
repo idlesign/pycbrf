@@ -2,8 +2,7 @@ from operator import attrgetter
 
 import click
 
-from pycbrf import VERSION_STR
-from pycbrf.toolbox import ExchangeRates
+from pycbrf import VERSION_STR, ExchangeRates
 
 
 @click.group()

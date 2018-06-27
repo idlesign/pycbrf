@@ -59,7 +59,7 @@ From your application:
 
 .. code-block:: python
 
-    from pycbrf.toolbox import ExchangeRates
+    from pycbrf import ExchangeRates
 
 
     rates = ExchangeRates('2016-06-26', locale_en=True)

@@ -1,3 +1,5 @@
+from .rates import ExchangeRates
+
 
 VERSION = (0, 1, 0)
 """Application version number tuple."""
