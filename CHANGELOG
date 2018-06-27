@@ -6,6 +6,7 @@ Unreleased
 ----------
 ! CLI. Added dependency 'click'.
 + CLI. Improved Windows compatibility.
+* CLI. Improved py2 compatibility.
 * Dropped QA for py3.3, added for py3.6.
 
 

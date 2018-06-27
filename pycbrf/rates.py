@@ -13,6 +13,8 @@ except ImportError:  # Py2
     from urllib2 import urlopen
 
 
+from .utils import string_types
+
 LOG = getLogger(__name__)
 URL_BASE = 'http://www.cbr.ru/scripts/'
 
@@ -49,7 +51,7 @@ class ExchangeRates(object):
             If not set names will be provided in Russian.
 
         """
-        if isinstance(on_date, str):
+        if isinstance(on_date, string_types):
             on_date = datetime.strptime(on_date, '%Y-%m-%d')
 
         self.dates_match = False
