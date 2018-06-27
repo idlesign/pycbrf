@@ -5,9 +5,6 @@ https://github.com/idlesign/pycbrf
 .. image:: https://img.shields.io/pypi/v/pycbrf.svg
     :target: https://pypi.python.org/pypi/pycbrf
 
-.. image:: https://img.shields.io/pypi/dm/pycbrf.svg
-    :target: https://pypi.python.org/pypi/pycbrf
-
 .. image:: https://img.shields.io/pypi/l/pycbrf.svg
     :target: https://pypi.python.org/pypi/pycbrf
 
