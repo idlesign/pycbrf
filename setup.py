@@ -1,7 +1,8 @@
-import os
 import io
+import os
+import re
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from pycbrf import VERSION
 
@@ -35,13 +36,16 @@ setup(
     author='Igor `idle sign` Starikov',
     author_email='idlesign@yandex.ru',
 
-    packages=['pycbrf'],
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
 
     install_requires=[],
-    setup_requires=[] + PYTEST_RUNNER,
+    setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
     tests_require=['pytest'],
+    extras_require={
+        'cli': ['click'],
+    },
 
     entry_points={
         'console_scripts': ['pycbrf = pycbrf.cli:main'],

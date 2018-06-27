@@ -42,10 +42,15 @@ Getting Exchange Rates
 
 From command line:
 
-.. code-block::
+.. code-block:: bash
 
     $ pycbrf rates
     $ pycbrf rates -d 2016-06-26 -c USD
+
+
+CLI requires `click` package to be installed. Can be installed with `pycbrf` using::
+
+    $ pip install pycbrf[cli]
 
 
 From your application:
