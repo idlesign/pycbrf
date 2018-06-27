@@ -4,6 +4,7 @@ pycbrf changelog
 
 Unreleased
 ----------
++ CLI. Improved Windows compatibility.
 * Dropped QA for py3.3, added for py3.6.
 
 

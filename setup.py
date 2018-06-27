@@ -5,30 +5,31 @@ from setuptools import setup
 
 from pycbrf import VERSION
 
-
 PATH_BASE = os.path.dirname(__file__)
-PATH_BIN = os.path.join(PATH_BASE, 'bin')
-
-SCRIPTS = None
-if os.path.exists(PATH_BIN):
-    SCRIPTS = [os.path.join('bin', f) for f in os.listdir(PATH_BIN) if os.path.join(PATH_BIN, f)]
-
-PYTEST_RUNNER = ['pytest-runner'] if 'test' in sys.argv else []
 
 
-def get_readme():
-    # This will return README (including those with Unicode symbols).
-    with io.open(os.path.join(PATH_BASE, 'README.rst')) as f:
+def read_file(fpath):
+    """Reads a file within package directories."""
+    with io.open(os.path.join(PATH_BASE, fpath)) as f:
         return f.read()
+
+
+def get_version():
+    """Returns version number, without module import (which can lead to ImportError
+    if some dependencies are unavailable before install."""
+    contents = read_file(os.path.join('pycbrf', '__init__.py'))
+    version = re.search('VERSION = \(([^)]+)\)', contents)
+    version = version.group(1).replace(', ', '.').strip()
+    return version
 
 
 setup(
     name='pycbrf',
-    version='.'.join(map(str, VERSION)),
+    version=get_version(),
     url='https://github.com/idlesign/pycbrf',
 
     description='Tools to query Bank of Russia',
-    long_description=get_readme(),
+    long_description=read_file('README.rst'),
     license='BSD 3-Clause License',
 
     author='Igor `idle sign` Starikov',
@@ -42,7 +43,9 @@ setup(
     setup_requires=[] + PYTEST_RUNNER,
     tests_require=['pytest'],
 
-    scripts=SCRIPTS,
+    entry_points={
+        'console_scripts': ['pycbrf = pycbrf.cli:main'],
+    },
 
     test_suite='tests',
 
