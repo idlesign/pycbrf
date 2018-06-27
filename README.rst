@@ -39,7 +39,8 @@ Requirements
 Getting Exchange Rates
 ----------------------
 
-From command line:
+CLI
+~~~
 
 .. code-block:: bash
 
@@ -52,7 +53,9 @@ CLI requires `click` package to be installed. Can be installed with `pycbrf` usi
     $ pip install pycbrf[cli]
 
 
-From your application:
+
+Python
+~~~~~~
 
 .. code-block:: python
 
