@@ -144,7 +144,7 @@ class ExchangeRates(object):
 
         LOG.debug('Getting exchange rates from %s ...', url)
 
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         data = response.content
 
         return data

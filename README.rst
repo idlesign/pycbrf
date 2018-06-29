@@ -26,26 +26,33 @@ Description
 Provides methods to get the following information:
 
 1. Exchange rates on various dates
+2. Banks information (requisites, codes, numbers, etc.)
 
 
 Requirements
 ------------
 
 * Python 2.7, 3.4+
-* `requests` package
+* `requests` Python package
+* `dbf_light` Python package
 * `click` package for CLI
 
 
-Getting Exchange Rates
-----------------------
+Usage
+-----
 
 CLI
 ~~~
 
 .. code-block:: bash
 
+    $ pycbrf --help
+
     $ pycbrf rates
     $ pycbrf rates -d 2016-06-26 -c USD
+
+    $ pycbrf banks
+    $ pycbrf banks -b 045004641
 
 
 CLI requires `click` package to be installed. Can be installed with `pycbrf` using::
@@ -59,7 +66,7 @@ Python
 
 .. code-block:: python
 
-    from pycbrf import ExchangeRates
+    from pycbrf import ExchangeRates, Banks
 
 
     rates = ExchangeRates('2016-06-26', locale_en=True)
@@ -85,4 +92,13 @@ Python
             par=Decimal('1'),
             rate=Decimal('65.5287'))
     '''
+
+    banks = Banks()
+    bank = bics['045004641']
+    bank.swift  # SABRRUMMNH1
+    bank.phone  # (383)2122004
+
+    bank_annotated = Banks.annotate([bank])[0]
+    for title, value in bank_annotated.items():
+        print('%s: %s' % (title, value))
 

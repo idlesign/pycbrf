@@ -1,3 +1,4 @@
+from .banks import Banks
 from .rates import ExchangeRates
 
 

@@ -2,7 +2,7 @@ from operator import attrgetter
 
 import click
 
-from pycbrf import VERSION_STR, ExchangeRates
+from pycbrf import VERSION_STR, ExchangeRates, Banks
 
 
 @click.group()
@@ -13,7 +13,7 @@ def entry_point():
 
 @entry_point.command()
 @click.option('-c', '--currency', help='Currency to get info (e.g. USD, 840)')
-@click.option('-d', '--date', help='Date to get rate for (e.g. 20016-06-27)')
+@click.option('-d', '--date', help='Date to get rate for (e.g. 2016-06-27)')
 def rates(currency, date):
     """Prints out exchange rates."""
 
@@ -34,6 +34,26 @@ def rates(currency, date):
     else:
         for rate in sorted(rates.rates, key=attrgetter('code')):
             print_rate(rate)
+
+
+@entry_point.command()
+@click.option('-d', '--date', help='Date to get rate for (e.g. 2018-06-29)')
+@click.option('-b', '--bic', help='BIC (Russian or SWIFT) to get information for.')
+def banks(date, bic):
+    """Prints out banks information."""
+
+    banks = Banks(on_date=date)
+
+    if bic:
+        banks = [banks[bic]]
+
+    else:
+        banks = banks.banks
+
+    for bank in Banks.annotate(banks):
+        click.secho('')
+        for title, value in bank.items():
+            click.secho('%s: %s' % (title, value))
 
 
 def main():

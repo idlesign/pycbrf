@@ -4,8 +4,6 @@ import re
 import sys
 from setuptools import setup, find_packages
 
-from pycbrf import VERSION
-
 PATH_BASE = os.path.dirname(__file__)
 
 
@@ -42,6 +40,7 @@ setup(
 
     install_requires=[
         'requests',
+        'dbf_light',
     ],
     setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
     tests_require=['pytest'],

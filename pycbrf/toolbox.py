@@ -1,2 +1,4 @@
 # -*- encoding: utf8 -*-
-from .rates import ExchangeRates  # Exposed as API
+# Exposed as API
+from .rates import ExchangeRates
+from .banks import Banks

@@ -7,6 +7,7 @@ Unreleased
 ! Added dependency 'requests'.
 ! CLI. Added dependency 'click'.
 + CLI. Improved Windows compatibility.
++ Implemented banks information extraction.
 * CLI. Improved py2 compatibility.
 * Dropped QA for py3.3, added for py3.6.
 * ExchangeRates now importable from package root.
