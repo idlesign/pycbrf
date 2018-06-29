@@ -22,14 +22,14 @@ def test_banks(monkeypatch, read_fixture):
 
     monkeypatch.setattr(Banks, '_get_archive', get_archive)
 
-    bics = Banks('2018-06-29')
+    banks = Banks('2018-06-29')
 
-    bank = bics['045004641']
+    bank = banks['045004641']
     assert bank.place == 'НОВОСИБИРСК'
     assert bank.place_type.shortname == 'Г'
     assert bank.region.name == 'НОВОСИБИРСКАЯ ОБЛАСТЬ'
 
-    bank = bics['SABRRUMMNH1']  # by swift bic
+    bank = banks['SABRRUMMNH1']  # by swift bic
     assert bank.bic == '045004641'
 
     annotated = Banks.annotate([bank])[0]

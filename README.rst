@@ -94,7 +94,7 @@ Python
     '''
 
     banks = Banks()
-    bank = bics['045004641']
+    bank = banks['045004641']
     bank.swift  # SABRRUMMNH1
     bank.phone  # (383)2122004
 
