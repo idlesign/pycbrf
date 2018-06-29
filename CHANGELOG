@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v0.2.0
+------
 ! Added dependency 'requests'.
 ! CLI. Added dependency 'click'.
 + CLI. Improved Windows compatibility.
