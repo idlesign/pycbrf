@@ -166,7 +166,7 @@ class Banks(object):
 
     @classmethod
     def _read_zipped_db(cls, zipped, filename):
-        with Dbf.open_zip(filename, zipped) as dbf:
+        with Dbf.open_zip(filename, zipped, case_sensitive=False) as dbf:
             for row in dbf:
                 yield row
 

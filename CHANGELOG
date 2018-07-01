@@ -2,6 +2,11 @@ pycbrf changelog
 ================
 
 
+Unreleased
+----------
+* Banks. Using case insensitive db names.
+
+
 v0.2.0
 ------
 ! Added dependency 'requests'.

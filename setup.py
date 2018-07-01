@@ -40,7 +40,7 @@ setup(
 
     install_requires=[
         'requests',
-        'dbf_light',
+        'dbf_light>=0.3.0',
     ],
     setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
     tests_require=['pytest'],
