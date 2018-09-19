@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v0.2.2
+------
 * Banks. Workaround bogus 'term' values.
 
 
