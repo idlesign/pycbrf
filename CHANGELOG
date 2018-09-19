@@ -2,6 +2,11 @@ pycbrf changelog
 ================
 
 
+Unreleased
+----------
+* Banks. Workaround bogus 'term' values.
+
+
 v0.2.1
 ------
 * Banks. Using case insensitive db names.

@@ -201,6 +201,11 @@ class Banks(object):
             row.at1 and telegraph.append(row.at1)
             row.at2 and telegraph.append(row.at2)
 
+            term = row.srok or 0
+
+            if term:
+                term = int(term)
+
             banks.append(Bank(
                 bic=bic,
                 name=row.namen,
@@ -212,7 +217,7 @@ class Banks(object):
                 place=row.nnp,
                 address=row.adr,
                 rkc_bic=row.rkc,
-                term=int(row.srok),
+                term=term,
                 date_added=row.date_in,
                 date_updated=row.dt_izm,
                 date_change=row.dt_izmr,
