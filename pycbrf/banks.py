@@ -1,6 +1,7 @@
 # -*- encoding: utf8 -*-
 from __future__ import unicode_literals
 
+import re
 from collections import namedtuple, OrderedDict
 from datetime import datetime
 from logging import getLogger
@@ -8,6 +9,7 @@ from logging import getLogger
 import requests
 from dbf_light import Dbf
 
+from .exceptions import PycbrfException
 from .utils import string_types, BytesIO
 
 LOG = getLogger(__name__)
@@ -240,7 +242,17 @@ class Banks(object):
 
     @classmethod
     def _get_data_swift(cls):
-        url = 'http://www.cbr.ru/analytics/digest/bik_swift-bik.zip'
+        # At some moment static URL has became dynamic, and now ne need to search for it every time.
+        host = 'http://www.cbr.ru'
+        response = requests.get('%s/analytics/digest/' % host, timeout=10)
+
+        found = re.findall('href="([^."]+\.zip)"', response.text)
+
+        if not found or len(found) > 1:
+            raise PycbrfException('Unable to get SWIFT info archive link')
+
+        url = host + found[0]
+
         items = {
             item.kod_rus: item.kod_swift for item in
             cls._read_zipped_db(cls._get_archive(url), filename='bik_swif.dbf')

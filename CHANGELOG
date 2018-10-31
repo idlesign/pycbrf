@@ -2,6 +2,11 @@ pycbrf changelog
 ================
 
 
+Unreleased
+----------
+* Fixed SWIFT info fetching.
+
+
 v0.2.2
 ------
 * Banks. Workaround bogus 'term' values.
