@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v0.2.3
+------
 * Fixed SWIFT info fetching.
 
 
