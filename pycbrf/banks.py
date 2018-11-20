@@ -56,15 +56,17 @@ Such objects will populate Banks().banks
 
 class Banks(object):
 
-    def __init__(self, on_date=None):
+    def __init__(self, on_date=None, require_swift=False):
         """Fetches BIC data.
 
         :param datetime|str on_date: Date to get data for.
             Python date objects and ISO date string are supported.
             If not set data for today will be fetched.
 
+        :param bool require_swift: Whether SWIFT data is required.
+
         """
-        self.banks = self._get_data(on_date)
+        self.banks = self._get_data(on_date, require_swift=require_swift)
 
     def __getitem__(self, item):
         """
@@ -173,14 +175,22 @@ class Banks(object):
                 yield row
 
     @classmethod
-    def _get_data(cls, on_date=None):
+    def _get_data(cls, on_date=None, require_swift=False):
 
         if isinstance(on_date, string_types):
             on_date = datetime.strptime(on_date, '%Y-%m-%d')
 
         on_date = on_date or datetime.now()
 
-        swifts = cls._get_data_swift()
+        try:
+            swifts = cls._get_data_swift()
+
+        except PycbrfException:
+
+            if require_swift:
+                raise
+
+            swifts = {}
 
         url = 'http://www.cbr.ru/vfs/mcirabis/BIK/bik_db_%s.zip' % on_date.strftime('%d%m%Y')
         zip = cls._get_archive(url)
