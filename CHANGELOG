@@ -2,6 +2,11 @@ pycbrf changelog
 ================
 
 
+Unreleased
+----------
++ Banks. Added support for new XML (ED807) format.
+
+
 v0.2.4
 ------
 * Banks. Swift data is now optional by default (see 'require_swift' parameter).
