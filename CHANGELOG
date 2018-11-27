@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v0.3.0
+------
 + Banks. Added support for new XML (ED807) format.
 * CLI. Banks. Hide attributes without values.
 
