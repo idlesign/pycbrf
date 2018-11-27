@@ -96,7 +96,7 @@ Python
     banks = Banks()
     bank = banks['045004641']
     bank.swift  # SABRRUMMNH1
-    bank.phone  # (383)2122004
+    bank.corr  # 30101810500000000641
 
     bank_annotated = Banks.annotate([bank])[0]
     for title, value in bank_annotated.items():
