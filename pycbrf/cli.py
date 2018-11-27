@@ -53,7 +53,7 @@ def banks(date, bic):
     for bank in Banks.annotate(banks):
         click.secho('')
         for title, value in bank.items():
-            click.secho('%s: %s' % (title, value))
+            value and click.secho('%s: %s' % (title, value))
 
 
 def main():
