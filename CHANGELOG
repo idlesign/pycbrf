@@ -2,6 +2,12 @@ pycbrf changelog
 ================
 
 
+Unreleased
+----------
+* Added QA for py3.7.
+* Dropped QA for py3.4.
+
+
 v0.3.0
 ------
 + Banks. Added support for new XML (ED807) format.
