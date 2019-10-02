@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v0.4.0 [2019-10-02]
+-------------------
 + Now request timeout and user agent may be overridden.
 * Added QA for py3.7.
 * Dropped QA for py3.4.
