@@ -2,17 +2,17 @@
 from __future__ import unicode_literals
 
 import re
+from functools import partial
 from collections import namedtuple, OrderedDict
 from datetime import datetime
 from logging import getLogger
 from xml.etree import ElementTree
 from zipfile import ZipFile
 
-import requests
 from dbf_light import Dbf
 
 from .exceptions import PycbrfException
-from .utils import string_types, BytesIO
+from .utils import string_types, BytesIO, WithRequests
 
 LOG = getLogger(__name__)
 
@@ -82,13 +82,7 @@ Such objects will populate Banks().banks
 """
 
 
-class Banks(object):
-
-    req_timeout = 10
-    req_user_agent = (
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/74.0.3729.169 YaBrowser/19.6.2.594 (beta) Yowser/2.5 Safari/537.36'
-    )
+class Banks(WithRequests):
 
     def __init__(self, on_date=None):
         """Fetches BIC data.
@@ -208,19 +202,6 @@ class Banks(object):
             annotated.append(bank_dict)
 
         return annotated
-
-    @classmethod
-    def _get_response(cls, url, **kwargs):
-
-        kwargs_ = {
-            'timeout': cls.req_timeout,
-            'headers': {
-                'User-Agent': cls.req_user_agent
-            },
-        }
-        kwargs_.update(kwargs)
-
-        return requests.get(url, **kwargs_)
 
     @classmethod
     def _get_archive(cls, url):
