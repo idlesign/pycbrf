@@ -2,7 +2,6 @@ import sys
 
 import requests
 
-
 PY3 = sys.version_info[0] == 3
 
 if PY3:  # pragma: nocover

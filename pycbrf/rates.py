@@ -2,10 +2,10 @@
 from __future__ import division
 
 from collections import namedtuple
-from xml.etree import ElementTree
-from logging import getLogger
 from datetime import datetime
 from decimal import Decimal
+from logging import getLogger
+from xml.etree import ElementTree
 
 from .utils import string_types, WithRequests
 

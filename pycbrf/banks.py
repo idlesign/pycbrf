@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import re
-from functools import partial
 from collections import namedtuple, OrderedDict
 from datetime import datetime
 from logging import getLogger
