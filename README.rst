@@ -14,9 +14,6 @@ https://github.com/idlesign/pycbrf
 .. image:: https://img.shields.io/travis/idlesign/pycbrf/master.svg
     :target: https://travis-ci.org/idlesign/pycbrf
 
-.. image:: https://landscape.io/github/idlesign/pycbrf/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/idlesign/pycbrf/master
-
 
 Description
 -----------
