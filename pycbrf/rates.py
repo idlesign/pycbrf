@@ -7,10 +7,7 @@ from logging import getLogger
 from datetime import datetime
 from decimal import Decimal
 
-import requests
-
-
-from .utils import string_types
+from .utils import string_types, WithRequests
 
 LOG = getLogger(__name__)
 URL_BASE = 'http://www.cbr.ru/scripts/'
@@ -27,7 +24,7 @@ Such objects will populate ExchangeRates().rates
 """
 
 
-class ExchangeRates(object):
+class ExchangeRates(WithRequests):
 
     def __init__(self, on_date=None, locale_en=False):
         """Fetches exchange rates.
@@ -134,8 +131,8 @@ class ExchangeRates(object):
 
         return result
 
-    @staticmethod
-    def _get_data(on_date=None, locale_en=False):
+    @classmethod
+    def _get_data(cls, on_date=None, locale_en=False):
 
         url = URL_BASE + 'XML_daily%s.asp' % ('_eng' if locale_en else '')
 
@@ -144,7 +141,7 @@ class ExchangeRates(object):
 
         LOG.debug('Getting exchange rates from %s ...', url)
 
-        response = requests.get(url, timeout=10)
+        response = cls._get_response(url)
         data = response.content
 
         return data
