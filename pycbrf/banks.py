@@ -84,6 +84,12 @@ Such objects will populate Banks().banks
 
 class Banks(object):
 
+    req_timeout = 10
+    req_user_agent = (
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/74.0.3729.169 YaBrowser/19.6.2.594 (beta) Yowser/2.5 Safari/537.36'
+    )
+
     def __init__(self, on_date=None):
         """Fetches BIC data.
 
@@ -204,10 +210,23 @@ class Banks(object):
         return annotated
 
     @classmethod
+    def _get_response(cls, url, **kwargs):
+
+        kwargs_ = {
+            'timeout': cls.req_timeout,
+            'headers': {
+                'User-Agent': cls.req_user_agent
+            },
+        }
+        kwargs_.update(kwargs)
+
+        return requests.get(url, **kwargs_)
+
+    @classmethod
     def _get_archive(cls, url):
         LOG.debug('Fetching data from %s ...', url)
 
-        response = requests.get(url, stream=True, timeout=10)
+        response = cls._get_response(url, stream=True)
         return BytesIO(response.content)
 
     @classmethod
@@ -430,7 +449,7 @@ class Banks(object):
     def _get_data_swift(cls):
         # At some moment static URL has became dynamic, and now ne need to search for it every time.
         host = 'http://www.cbr.ru'
-        response = requests.get('%s/analytics/digest/' % host, timeout=10)
+        response = cls._get_response('%s/analytics/digest/' % host)
 
         found = re.findall('href="([^."]+\.zip)"', response.text)
 
