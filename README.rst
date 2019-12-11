@@ -31,8 +31,8 @@ Requirements
 
 * Python 2.7, 3.4+
 * `requests` Python package
-* `dbf_light` Python package
-* `click` package for CLI
+* `dbf_light` Python package (to support legasy Bank format)
+* `click` package (optional, for CLI)
 
 
 Usage
