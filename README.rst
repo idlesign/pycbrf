@@ -29,7 +29,7 @@ Provides methods to get the following information:
 Requirements
 ------------
 
-* Python 2.7, 3.4+
+* Python 2.7, 3.6+
 * `requests` Python package
 * `dbf_light` Python package (to support legasy Bank format)
 * `click` package (optional, for CLI)
