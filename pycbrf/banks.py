@@ -72,6 +72,7 @@ Bank = namedtuple(
         'type',
         'swift',
         'restricted',
+        'restrictions',
     ]
 )
 """Represents bank entry in current format.
@@ -79,6 +80,41 @@ Bank = namedtuple(
 Such objects will populate Banks().banks
 
 """
+
+
+class Restriction(object):
+    """Represents a restriction imposed on an institution."""
+
+    __slots__ = ['code', 'date', 'account', 'title']
+
+    codes = {
+        'URRS': 'Ограничение предоставления сервиса срочного перевода',
+        'LWRS': 'Отзыв (аннулирование) лицензии',
+        'MRTR': 'Мораторий на удовлетворение требований кредиторов',
+        'LMRS': 'Временное сохранение счета с его функционированием в ограниченном режиме',
+        'CLRS': 'Закрытие счета',
+        'FPRS': 'Приостановление предоставления сервиса быстрых платежей',
+    }
+    """УФЭБС_2021_1_1_КБР_Кодовые_Значения.pdf
+    81 Статус участника
+    82 Ограничения операций по счету
+
+    """
+
+    def __init__(self, code, date, account=''):
+        self.code = code
+
+        self.date = date
+
+        self.account = account
+        """Might be empty in not an account level restriction."""
+
+        self.title = self.codes.get(code, '')
+
+    def __str__(self):
+        return '%s %s [%s] %s' % (
+            self.date, self.code, self.account, self.title,
+        )
 
 
 class Banks(WithRequests):
@@ -129,6 +165,7 @@ class Banks(WithRequests):
             ('date_change', 'Дата изменения реквизитов'),
 
             ('restricted', 'С ограничениями'),  # Fuzzy analogy for `control_code`.
+            ('restrictions', 'Ограничения'),
             ('control_code', 'Код контроля'),
             ('control_date', 'Дата контроля'),
 
@@ -195,6 +232,9 @@ class Banks(WithRequests):
 
                 elif isinstance(value, bool):
                     value = 'Да' if value else 'Нет'
+
+                elif isinstance(value, list):
+                    value = '\n  ' + '\n  '.join(map(str, value))
 
                 bank_dict[title] = value or ''
 
@@ -266,25 +306,31 @@ class Banks(WithRequests):
             '90': 'Конкурсный управляющий (ликвидатор, ликвидационная комиссия)',
             '99': 'Клиент Банка России, не являющийся участником платежной системы',
         }
-        """
+        """УФЭБС_2021_1_1_КБР_Кодовые_Значения.pdf
         77 Тип участника перевода
-        УФЭБС_2021_1_1_КБР_Кодовые_Значения.pdf
         
         """
 
         banks = []
 
         for entry in xml.findall(ns + 'BICDirectoryEntry'):
+            restrictions_applied = []
+
             bic = entry.attrib['BIC']
 
             el_info = entry.find(ns + 'ParticipantInfo')
             attrs_info = el_info.attrib
 
-            if attrs_info['ParticipantStatus'] == 'PSDL':
+            if attrs_info['ParticipantStatus'] == 'PSDL':  # Маркер удаления
                 continue
 
-            el_restrictions = el_info.findall(ns + 'RstrList')
-            has_restrictions = bool(el_restrictions)
+            for el_restriction in el_info.findall(ns + 'RstrList'):
+                attrs = el_restriction.attrib
+                code = attrs['Rstr']
+                restrictions_applied.append(Restriction(
+                    code=code,
+                    date=datetime.strptime(attrs['RstrDate'], '%Y-%m-%d').date(),
+                ))
 
             swiftcode = None
 
@@ -305,14 +351,18 @@ class Banks(WithRequests):
                 """
                 attrs = el_account.attrib
 
-                if attrs['AccountStatus'] == 'ACDL':  # [4]
+                if attrs['AccountStatus'] == 'ACDL':  # [4]  Маркер удаления
                     continue
 
                 if attrs['RegulationAccountType'] != 'CRSA':  # [4]
                     """
                     CBRA Счет Банка России
-                    BANA Банковский счет
                     CRSA Корреспондентский счет
+                    BANA Банковский счет
+                    TRSA Счет Федерального казначейства
+                    TRUA Счет доверительного управления
+                    CLAC Клиринговый счет
+                    UTRA Единый казначейский счет
                     
                     """
                     continue
@@ -320,8 +370,14 @@ class Banks(WithRequests):
                 assert corr == '', 'More than one correspondent account detected'
                 corr = attrs['Account']  # [20]
 
-                el_restrictions = el_account.findall(ns + 'AccRstrList')
-                has_restrictions = has_restrictions or bool(el_restrictions)
+                for el_restriction in el_account.findall(ns + 'AccRstrList'):
+                    attrs = el_restriction.attrib
+                    code = attrs['AccRstr']
+                    restrictions_applied.append(Restriction(
+                        code=code,
+                        date=datetime.strptime(attrs['AccRstrDate'], '%Y-%m-%d').date(),
+                        account=corr,
+                    ))
 
             banks.append(Bank(
                 bic=bic,  # [9]
@@ -338,7 +394,8 @@ class Banks(WithRequests):
                 date_added=parse_date(attrs_info['DateIn']),
                 corr=corr,
                 swift=swiftcode,
-                restricted=has_restrictions,
+                restricted=bool(restrictions_applied),
+                restrictions=restrictions_applied,
             ))
 
         return banks

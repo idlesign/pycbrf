@@ -4,6 +4,7 @@ pycbrf changelog
 
 Unreleased
 ----------
+* Banks. Added detailed restrictions information.
 * Banks. Fixed KeyError 74: Added new participant type definition.
 * Dropped QA for Python 3.4 and 3.5.
 

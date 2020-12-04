@@ -54,3 +54,12 @@ def test_banks(legacy, monkeypatch, read_fixture):
     annotated = Banks.annotate([bank])[0]
     assert annotated['БИК'] == '045004641'
     assert 'vkey' not in annotated['Тип']
+
+    # Test restrictions
+    if not legacy:
+        bank = banks['044525487']
+        assert bank.restricted
+        assert len(bank.restrictions) == 2
+
+        annotated = Banks.annotate([bank])[0]
+        assert annotated['Ограничения']
