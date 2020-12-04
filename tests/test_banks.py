@@ -12,25 +12,37 @@ def test_get_archive():
     assert Banks._get_data_swift()
 
 
-def test_banks(monkeypatch, read_fixture):
+@pytest.mark.parametrize('legacy', [True, False])
+def test_banks(legacy, monkeypatch, read_fixture):
 
     @classmethod  # hack
     def get_archive(cls, url):
-        basename = path.basename(url)
+        if legacy:
 
-        if basename == 'bik_swift-bik.zip':
-            return read_fixture(basename)
+            basename = path.basename(url)
 
-        return read_fixture('bik_db_28062018.zip')
+            if basename == 'bik_swift-bik.zip':
+                return read_fixture(basename)
+
+            return read_fixture('bik_db_28062018.zip')
+
+        return read_fixture('20201204ED01OSBR.zip')
 
     monkeypatch.setattr(Banks, '_get_archive', get_archive)
 
-    banks = Banks('2018-06-29')
+    banks = Banks('2018-06-29' if legacy else '2020-11-04')
 
     bank = banks['045004641']
-    assert bank.place == 'НОВОСИБИРСК'
-    assert bank.place_type.shortname == 'Г'
-    assert bank.region.name == 'НОВОСИБИРСКАЯ ОБЛАСТЬ'
+
+    if legacy:
+        assert bank.place == 'НОВОСИБИРСК'
+        assert bank.place_type.shortname == 'Г'
+        assert bank.region.name == 'НОВОСИБИРСКАЯ ОБЛАСТЬ'
+
+    else:
+        assert bank.place == 'Новосибирск'
+        assert bank.place_type == 'г'
+        assert bank.region_code == '50'
 
     try:
         bank = banks['SABRRUMMNH1']  # by swift bic

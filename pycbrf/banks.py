@@ -230,7 +230,7 @@ class Banks(WithRequests):
     def _get_data_xml(cls, on_date):
         """Справочник БИК (Клиентов Банка России). XML ED807
 
-        http://www.cbr.ru/analytics/Formats/
+        http://www.cbr.ru/development/formats/
 
         :param datetime on_date:
         :rtype: list
@@ -261,10 +261,16 @@ class Banks(WithRequests):
             '60': 'Иностранная кредитная организация',
             '65': 'Иностранный центральный (национальный) банк',
             '71': 'Клиент кредитной организации, являющийся косвенным участником',
+            '75': 'Клиринговая организация',
             '78': 'Внешняя платежная система',
             '90': 'Конкурсный управляющий (ликвидатор, ликвидационная комиссия)',
             '99': 'Клиент Банка России, не являющийся участником платежной системы',
         }
+        """
+        77 Тип участника перевода
+        УФЭБС_2021_1_1_КБР_Кодовые_Значения.pdf
+        
+        """
 
         banks = []
 
@@ -295,6 +301,7 @@ class Banks(WithRequests):
                 @DateIn - Дата открытия счета [YY-mm-dd]
                 @Check
                 @AccountCBRBIC
+                
                 """
                 attrs = el_account.attrib
 
@@ -306,6 +313,7 @@ class Banks(WithRequests):
                     CBRA Счет Банка России
                     BANA Банковский счет
                     CRSA Корреспондентский счет
+                    
                     """
                     continue
 
@@ -326,7 +334,7 @@ class Banks(WithRequests):
                 place=attrs_info.get('Nnp', ''),  # [25]
                 address=attrs_info.get('Adr', ''),  # [160]
                 regnum=attrs_info.get('RegN', ''),  # [9]
-                type=types[attrs_info['PtType']],  # [2]
+                type=types.get(attrs_info['PtType'], ''),  # [2]
                 date_added=parse_date(attrs_info['DateIn']),
                 corr=corr,
                 swift=swiftcode,
