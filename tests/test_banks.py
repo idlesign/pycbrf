@@ -11,7 +11,7 @@ def test_get_archive():
 
 
 @pytest.mark.parametrize('legacy', [True, False])
-def test_banks(legacy, monkeypatch, read_fixture):
+def test_banks(legacy, monkeypatch, datafix_readbin):
 
     @classmethod  # hack
     def get_archive(cls, url):
@@ -20,11 +20,11 @@ def test_banks(legacy, monkeypatch, read_fixture):
             basename = path.basename(url)
 
             if basename == 'bik_swift-bik.zip':
-                return read_fixture(basename)
+                return datafix_readbin(basename, io=True)
 
-            return read_fixture('bik_db_28062018.zip')
+            return datafix_readbin('bik_db_28062018.zip', io=True)
 
-        return read_fixture('20201204ED01OSBR.zip')
+        return datafix_readbin('20201204ED01OSBR.zip', io=True)
 
     monkeypatch.setattr(Banks, '_get_archive', get_archive)
 

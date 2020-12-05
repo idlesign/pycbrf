@@ -43,7 +43,10 @@ setup(
         'dbf_light>=0.3.0',
     ],
     setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
-    tests_require=['pytest'],
+    tests_require=[
+        'pytest',
+        'pytest-datafixtures>=1.0.0',
+    ],
     extras_require={
         'cli': ['click'],
     },
