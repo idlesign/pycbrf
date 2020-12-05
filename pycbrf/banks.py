@@ -11,7 +11,7 @@ from zipfile import ZipFile
 from dbf_light import Dbf
 
 from .exceptions import PycbrfException
-from .utils import string_types, BytesIO, WithRequests
+from .utils import string_types, BytesIO, WithRequests, text_type
 
 LOG = getLogger(__name__)
 
@@ -234,7 +234,7 @@ class Banks(WithRequests):
                     value = 'Да' if value else 'Нет'
 
                 elif isinstance(value, list):
-                    value = '\n  ' + '\n  '.join(map(str, value))
+                    value = '\n  ' + '\n  '.join(map(text_type, value))
 
                 bank_dict[title] = value or ''
 

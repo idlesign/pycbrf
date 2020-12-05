@@ -6,11 +6,13 @@ PY3 = sys.version_info[0] == 3
 
 if PY3:  # pragma: nocover
     string_types = str,
+    text_type = str
     import io
     BytesIO = io.BytesIO
 
 else:  # pragma: nocover
     string_types = basestring,
+    text_type = unicode
     import StringIO
     BytesIO = StringIO.StringIO
 
