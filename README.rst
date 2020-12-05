@@ -94,6 +94,7 @@ Python
 
     banks = Banks()
     bank = banks['045004641']
+    assert bank
     bank.swift  # SABRRUMMNH1
     bank.corr  # 30101810500000000641
 

@@ -9,6 +9,7 @@ def test_rates():
     assert str(rates.date_received) == '2016-06-25 00:00:00'
     assert not rates.dates_match
 
+    assert rates['dummy'] is None
     assert rates['USD'].name == 'US Dollar'
     assert rates['R01235'].name == 'US Dollar'
     assert rates['840'].name == 'US Dollar'

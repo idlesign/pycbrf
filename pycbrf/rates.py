@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from logging import getLogger
-from typing import NamedTuple, Union, List
+from typing import NamedTuple, Union, List, Optional
 from xml.etree import ElementTree
 
 from .utils import WithRequests
@@ -73,7 +73,7 @@ class ExchangeRates(WithRequests):
 
         self.dates_match: bool = (self.date_requested == self.date_received)
 
-    def __getitem__(self, item: str) -> 'ExchangeRate':
+    def __getitem__(self, item: str) -> Optional['ExchangeRate']:
 
         if item.isdigit():
             key = 'num'
@@ -86,7 +86,7 @@ class ExchangeRates(WithRequests):
 
         indexed = {getattr(currency, key): currency for currency in self.rates}
 
-        return indexed[item]
+        return indexed.get(item)
 
     @staticmethod
     def _parse(data):

@@ -30,6 +30,7 @@ def test_banks(legacy, monkeypatch, read_fixture):
 
     banks = Banks('2018-06-29' if legacy else '2020-11-04')
 
+    bank0 = banks['dummy']
     bank = banks['045004641']
 
     if legacy:
@@ -42,14 +43,11 @@ def test_banks(legacy, monkeypatch, read_fixture):
         assert bank.place_type == 'г'
         assert bank.region_code == '50'
 
-    try:
-        bank = banks['SABRRUMMNH1']  # by swift bic
-        assert bank.bic == '045004641'
-        
-    except KeyError:  # no swift data
-        pass
+    bank_swift = banks['SABRRUMMNH1']  # by swift bic
+    if bank_swift:
+        assert bank_swift.bic == '045004641'
 
-    annotated = Banks.annotate([bank])[0]
+    annotated = Banks.annotate([bank, bank0])[0]
     assert annotated['БИК'] == '045004641'
     assert 'vkey' not in annotated['Тип']
 

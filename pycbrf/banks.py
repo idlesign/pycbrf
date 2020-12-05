@@ -4,7 +4,7 @@ from io import BytesIO
 from logging import getLogger
 from typing import NamedTuple, List, Union, Optional
 from xml.etree import ElementTree
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 
 from dbf_light import Dbf
 
@@ -130,12 +130,12 @@ class Banks(WithRequests):
         self.on_date = on_date
         self.legacy = legacy  # CB RF radically changed format from DBF (legacy) to XML.
 
-    def __getitem__(self, item: str) -> Union['Bank', 'BankLegacy']:
+    def __getitem__(self, item: str) -> Optional[Union['Bank', 'BankLegacy']]:
 
         key = 'swift' if len(item) in {8, 11} else 'bic'
         indexed = {getattr(bank, key): bank for bank in self.banks}
 
-        return indexed[item]
+        return indexed.get(item)
 
     @classmethod
     def get_titles(cls) -> dict:
@@ -203,6 +203,10 @@ class Banks(WithRequests):
         unset = object()
 
         for bank in banks:
+
+            if not bank:
+                continue
+
             bank_dict = {}
             bank = bank._asdict()
 
@@ -229,10 +233,15 @@ class Banks(WithRequests):
         return annotated
 
     @classmethod
-    def _get_archive(cls, url: str) -> BytesIO:
+    def _get_archive(cls, url: str) -> Optional[BytesIO]:
         LOG.debug(f'Fetching data from {url} ...')
 
         response = cls._get_response(url, stream=True)
+
+        if response.status_code != 200:
+            # E.g. 404 is expected on weekends.
+            return None
+
         return BytesIO(response.content)
 
     @classmethod
@@ -260,10 +269,13 @@ class Banks(WithRequests):
 
         :param on_date:
 
-
         """
-        xml = cls._read_zipped_xml(
-            cls._get_archive(f"http://www.cbr.ru/VFS/mcirabis/BIKNew/{on_date.strftime('%Y%m%d')}ED01OSBR.zip"))
+        data = cls._get_archive(f"http://www.cbr.ru/VFS/mcirabis/BIKNew/{on_date.strftime('%Y%m%d')}ED01OSBR.zip")
+
+        if data is None:
+            return []
+
+        xml = cls._read_zipped_xml(data)
 
         def parse_date(val):
             if not val:
@@ -402,6 +414,9 @@ class Banks(WithRequests):
 
         zipped = cls._get_archive(
             f"http://www.cbr.ru/vfs/mcirabis/BIK/bik_db_{on_date.strftime('%d%m%Y')}.zip")
+
+        if zipped is None:
+            return []
 
         def get_indexed(dbname, index):
             return {getattr(region, index): region for region in cls._read_zipped_db(zipped, filename=dbname)}
