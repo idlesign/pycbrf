@@ -2,7 +2,7 @@ from operator import attrgetter
 
 import click
 
-from pycbrf import VERSION_STR, ExchangeRates, Banks
+from . import VERSION_STR, ExchangeRates, Banks
 
 
 @click.group()
@@ -18,7 +18,7 @@ def rates(currency, date):
     """Prints out exchange rates."""
 
     def print_rate(rate):
-        click.secho('[%s] %s - %s' % (rate.code, rate.name, rate.rate))
+        click.secho(f'[{rate.code}] {rate.name} - {rate.rate}')
 
     rates = ExchangeRates(on_date=date, locale_en=True)
 
@@ -30,7 +30,7 @@ def rates(currency, date):
         if rate:
             print_rate(rate)
         else:
-            click.secho('No data for %s' % currency)
+            click.secho(f'No data for {currency}')
     else:
         for rate in sorted(rates.rates, key=attrgetter('code')):
             print_rate(rate)
@@ -53,7 +53,7 @@ def banks(date, bic):
     for bank in Banks.annotate(banks):
         click.secho('')
         for title, value in bank.items():
-            value and click.secho('%s: %s' % (title, value))
+            value and click.secho(f'{title}: {value}')
 
 
 def main():

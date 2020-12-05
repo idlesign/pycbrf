@@ -29,10 +29,10 @@ Provides methods to get the following information:
 Requirements
 ------------
 
-* Python 2.7, 3.6+
-* `requests` Python package
-* `dbf_light` Python package (to support legasy Bank format)
-* `click` package (optional, for CLI)
+* Python 3.6+
+* ``requests`` Python package
+* ``dbf_light`` Python package (to support legacy Bank format)
+* ``click`` package (optional, for CLI)
 
 
 Usage
@@ -52,7 +52,9 @@ CLI
     $ pycbrf banks -b 045004641
 
 
-CLI requires `click` package to be installed. Can be installed with `pycbrf` using::
+CLI requires ``click`` package to be installed. Can be installed with ``pycbrf`` using:
+
+.. code-block:: bash
 
     $ pip install pycbrf[cli]
 
@@ -97,5 +99,5 @@ Python
 
     bank_annotated = Banks.annotate([bank])[0]
     for title, value in bank_annotated.items():
-        print('%s: %s' % (title, value))
+        print(f'{title}: {value}')
 

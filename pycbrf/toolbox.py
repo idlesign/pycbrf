@@ -1,5 +1,4 @@
-# -*- encoding: utf8 -*-
 # Exposed as API
-from .rates import ExchangeRates
-from .banks import Banks
-from .exceptions import PycbrfException
+from .banks import Banks  # noqa
+from .exceptions import PycbrfException  # noqa
+from .rates import ExchangeRates  # noqa

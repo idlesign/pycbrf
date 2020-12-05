@@ -1,6 +1,3 @@
-# -*- encoding: utf8 -*-
-from __future__ import unicode_literals
-
 from pycbrf import ExchangeRates
 
 
@@ -22,6 +19,6 @@ def test_rates():
     assert str(rates.date_received) == '2016-06-25 00:00:00'
     assert rates.dates_match
 
-    assert rates['USD'].name == u'Доллар США'
-    assert rates['R01235'].name == u'Доллар США'
-    assert rates['840'].name == u'Доллар США'
+    assert rates['USD'].name == 'Доллар США'
+    assert rates['R01235'].name == 'Доллар США'
+    assert rates['840'].name == 'Доллар США'

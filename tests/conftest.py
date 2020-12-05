@@ -10,7 +10,7 @@ def dir_fixtures(request):
 @pytest.fixture
 def read_fixture(dir_fixtures):
 
-    from pycbrf.utils import BytesIO
+    from io import BytesIO
 
     def read_fixture_(name):
 
