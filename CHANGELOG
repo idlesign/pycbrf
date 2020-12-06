@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v1.0.0 [2020-12-06]
+-------------------
 ! Addressing unknown banks and rates no gives None instead of 'KeyError'.
 ! Banks. Trying to fetch data on holidays now gives an umpty banks list instad of 'BadZipFile'.
 ! Dropped support for Python < 3.6.
