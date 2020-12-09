@@ -14,11 +14,7 @@ from .utils import WithRequests
 LOG = getLogger(__name__)
 
 
-class _BankBase(NamedTuple):
-    """Base from banks."""
-
-
-class BankLegacy(_BankBase, NamedTuple):
+class BankLegacy(NamedTuple):
     """Represents bank entry in legacy format.
 
     Such objects will populate Banks().banks
@@ -53,7 +49,7 @@ class BankLegacy(_BankBase, NamedTuple):
     swift: Optional[str]
 
 
-class Bank(_BankBase, NamedTuple):
+class Bank(NamedTuple):
     """Represents bank entry in current format.
 
     Such objects will populate Banks().banks
@@ -217,7 +213,7 @@ class Banks(WithRequests):
                     # Some fields may be missing in Bank/BankLegacy
                     continue
 
-                if isinstance(value, _BankBase):
+                if isinstance(value, (BankLegacy, Bank)):
                     value = pick_value(value._asdict())
 
                 elif isinstance(value, bool):
