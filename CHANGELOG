@@ -2,8 +2,8 @@ pycbrf changelog
 ================
 
 
-Unreleased
-----------
+v1.0.1 [2020-12-09]
+-------------------
 * Made Python 3.9 compatible.
 
 
