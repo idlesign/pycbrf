@@ -51,11 +51,21 @@ def test_banks(legacy, monkeypatch, datafix_readbin):
     assert annotated['БИК'] == '045004641'
     assert 'vkey' not in annotated['Тип']
 
-    # Test restrictions
     if not legacy:
+
         bank = banks['044525487']
+
+        # Test restrictions
         assert bank.restricted
         assert len(bank.restrictions) == 2
 
         annotated = Banks.annotate([bank])[0]
         assert annotated['Ограничения']
+        assert annotated['Счета']
+
+        # Test accounts
+        assert bank.accounts
+        account = bank.accounts[0]
+        assert account.number == '30101810400000000487'
+        assert 'CRSA' in f'{account}'
+        assert len(account.restrictions) == 2

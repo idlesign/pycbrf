@@ -2,9 +2,9 @@ import re
 from datetime import datetime
 from io import BytesIO
 from logging import getLogger
-from typing import NamedTuple, List, Union, Optional
+from typing import NamedTuple, List, Union, Optional, Set
 from xml.etree import ElementTree
-from zipfile import ZipFile, BadZipFile
+from zipfile import ZipFile
 
 from dbf_light import Dbf
 
@@ -71,6 +71,45 @@ class Bank(NamedTuple):
     swift: str
     restricted: bool
     restrictions: List['Restriction']
+    accounts: List['Account']
+
+
+class Account:
+    """Represents an account."""
+
+    types = {
+        'CBRA': 'Счёт Банка России',
+        'CRSA': 'Корреспондентский счёт',
+        'BANA': 'Банковский счёт',
+        'TRSA': 'Счёт Федерального казначейства',
+        'TRUA': 'Счёт доверительного управления',
+        'CLAC': 'Клиринговый счёт',
+        'UTRA': 'Единый казначейский счёт',
+    }
+
+    __slots__ = ['number', 'type', 'type_str', 'date_added', 'date_removed', 'restrictions']
+
+    def __init__(
+        self,
+        *,
+        number: str,
+        type: str,
+        date_added: Optional[datetime.date],
+        date_removed: Optional[datetime.date],
+        restrictions: List['Restriction'],
+    ):
+        self.number = number
+        self.type = type
+        self.type_str = self.types.get(type, '')
+        self.date_added = date_added
+        self.date_removed = date_removed
+        self.restrictions = restrictions
+
+    def __str__(self):
+        dates = f'{self.date_added or ""}'
+        if dates:
+            dates = f'[{dates}]'
+        return f'{self.number} [{self.type}] {self.type_str} {dates}'
 
 
 class Restriction:
@@ -92,7 +131,7 @@ class Restriction:
 
     """
 
-    def __init__(self, code: str, date: datetime.date, account: str = ''):
+    def __init__(self, *, code: str, date: datetime.date, account: str = ''):
         self.code = code
 
         self.date = date
@@ -111,7 +150,7 @@ class Banks(WithRequests):
     def __init__(self, on_date: Union[datetime, str] = None):
         """Fetches BIC data.
 
-        :param datetime|str on_date: Date to get data for.
+        :param on_date: Date to get data for.
             Python date objects and ISO date string are supported.
             If not set data for today will be fetched.
 
@@ -153,6 +192,7 @@ class Banks(WithRequests):
             'control_code': 'Код контроля',
             'control_date': 'Дата контроля',
 
+            'accounts': 'Счета',
             'corr': 'Кор. счёт',
             'corr_bik': 'Кор. счёт (расчёты с БИК)',
 
@@ -261,7 +301,7 @@ class Banks(WithRequests):
     def _get_data_xml(cls, on_date: datetime) -> List['Bank']:
         """Справочник БИК (Клиентов Банка России). XML ED807
 
-        http://www.cbr.ru/development/formats/
+        https://cbr.ru/development/Formats/
 
         :param on_date:
 
@@ -322,7 +362,7 @@ class Banks(WithRequests):
                 code = attrs['Rstr']
                 restrictions_applied.append(Restriction(
                     code=code,
-                    date=datetime.strptime(attrs['RstrDate'], '%Y-%m-%d').date(),
+                    date=parse_date(attrs['RstrDate']),
                 ))
 
             swiftcode = None
@@ -332,45 +372,40 @@ class Banks(WithRequests):
                     swiftcode = el_swift.attrib['SWBIC']  # [8/11]
                     break
 
-            corr = ''
-            accounts = entry.findall(f'{ns}Accounts')
+            account_corr_number = ''
+            accounts = []
 
-            for el_account in accounts:
-                """
-                @DateIn - Дата открытия счета [YY-mm-dd]
-                @Check
-                @AccountCBRBIC
-                
-                """
+            for el_account in entry.findall(f'{ns}Accounts'):
                 attrs = el_account.attrib
 
                 if attrs['AccountStatus'] == 'ACDL':  # [4]  Маркер удаления
                     continue
 
-                if attrs['RegulationAccountType'] != 'CRSA':  # [4]
-                    """
-                    CBRA Счет Банка России
-                    CRSA Корреспондентский счет
-                    BANA Банковский счет
-                    TRSA Счет Федерального казначейства
-                    TRUA Счет доверительного управления
-                    CLAC Клиринговый счет
-                    UTRA Единый казначейский счет
-                    
-                    """
-                    continue
+                account_type = attrs['RegulationAccountType']
+                account_number = attrs['Account']  # [20]
 
-                assert corr == '', 'More than one correspondent account detected'
-                corr = attrs['Account']  # [20]
+                if account_type == 'CRSA':
+                    account_corr_number = account_number
+
+                account_restrictions = []
 
                 for el_restriction in el_account.findall(f'{ns}AccRstrList'):
                     attrs = el_restriction.attrib
-                    code = attrs['AccRstr']
-                    restrictions_applied.append(Restriction(
-                        code=code,
-                        date=datetime.strptime(attrs['AccRstrDate'], '%Y-%m-%d').date(),
-                        account=corr,
-                    ))
+                    restriction = Restriction(
+                        code=attrs['AccRstr'],
+                        date=parse_date(attrs['AccRstrDate']),
+                        account=account_number,
+                    )
+                    restrictions_applied.append(restriction)
+                    account_restrictions.append(restriction)
+
+                accounts.append(Account(
+                    number=account_number,
+                    type=account_type,
+                    date_added=parse_date(attrs.get('DateIn')),
+                    date_removed=parse_date(attrs.get('DateOut')),
+                    restrictions=account_restrictions,
+                ))
 
             banks.append(Bank(
                 bic=bic,  # [9]
@@ -385,10 +420,11 @@ class Banks(WithRequests):
                 regnum=attrs_info.get('RegN', ''),  # [9]
                 type=types.get(attrs_info['PtType'], ''),  # [2]
                 date_added=parse_date(attrs_info['DateIn']),
-                corr=corr,
+                corr=account_corr_number,
                 swift=swiftcode,
                 restricted=bool(restrictions_applied),
                 restrictions=restrictions_applied,
+                accounts=accounts,
             ))
 
         return banks
