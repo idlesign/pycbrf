@@ -1,13 +1,130 @@
 from datetime import datetime
 from decimal import Decimal
 from logging import getLogger
-from typing import NamedTuple, Union, List, Optional
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 from xml.etree import ElementTree
 
-from .utils import WithRequests
+from .utils import SingletonMeta, WithRequests
 
 LOG = getLogger(__name__)
 URL_BASE = 'http://www.cbr.ru/scripts/'
+
+
+class Currency(NamedTuple):
+    """
+    Represents a currency.
+
+    id:
+        Internal code of the Bank of Russia, like 'R01010'
+    name_eng:
+        Currency name in English, like 'Australian Dollar'
+    name_ru:
+        Currency name in Russian, like 'Австралийский доллар'
+    par:
+        Nominal exchange rate, like 1
+    num:
+        ISO 4217 currency numeric code, like '036'
+    code:
+        ISO 4217 currency alphabetic code, like 'AUD'
+    """
+
+    id: str
+    name_ru: str
+    name_eng: str
+    num: str
+    code: str
+    par: Decimal
+
+
+class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
+    """Singleton class represents library of Currency"""
+
+    def __init__(self):
+        self.length = 0
+        self.update_date = None
+        self.currencies = None
+        self.update()
+
+    def update(self):
+        raw_data = self._get_data()
+        self.currencies = self._parse(raw_data)
+        self.update_date = datetime.now()
+
+    @classmethod
+    def _get_data(cls) -> Tuple[bytes, bytes]:
+        url = f"{URL_BASE}XML_valFull.asp"
+
+        LOG.debug(f'Getting update currencies from {url} ...')
+
+        daily_update_response = cls._get_response(url)
+        daily_update_data = daily_update_response.content
+
+        monhtly_update_response = cls._get_response(url, params={'d': 1})
+        monthly_update_data = monhtly_update_response.content
+
+        return daily_update_data, monthly_update_data
+
+    def _parse(self, data: Tuple[bytes, bytes]) -> Dict[str, 'Currency']:
+        currencies = {}
+        counter = 0
+
+        LOG.debug('Parsing data ...')
+
+        for sub_data in data:
+            root = ElementTree.fromstring(sub_data)
+
+            for child in root:
+                props = {}
+                for prop in child:
+                    props[prop.tag] = prop.text
+
+                currency = Currency(
+                    id=child.attrib['ID'],
+                    name_eng=props['EngName'],
+                    name_ru=props['Name'],
+                    code=props['ISO_Char_Code'],
+                    # code like '036' parse like '36', so it needs format to ISO 4217, also
+                    # data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
+                    # So additional If-statement was added to exclude format None
+                    num=self.format_num_code(props['ISO_Num_Code']) if props['ISO_Num_Code'] else None,
+                    par=Decimal(props['Nominal']),
+                )
+
+                counter += 1
+                currencies[currency.id.lower()] = currency
+                # Data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
+                # So additional If-statements were added to exclude None from the 'codes'.
+                if currency.code:
+                    currencies[currency.code.lower()] = currency
+                if currency.num:
+                    currencies[currency.num] = currency
+
+        self.length = counter
+        LOG.debug(f"Parsed: {self.length} currencies")
+        return currencies
+
+    @staticmethod
+    def format_num_code(num: int):
+        num_ = num
+        if isinstance(num_, str):
+            num_ = int(num_)
+        return "{:03}".format(num_)
+
+    def __getitem__(self, item: str) -> Optional['Currency']:
+        item_ = item
+        if not item:
+            return None
+        if isinstance(item_, int) or (isinstance(item_, str) and len(item_) < 3):
+            item_ = self.format_num_code(item_)
+        item_ = item_.lower()
+
+        return self.currencies.get(item_.lower())
+
+    def __str__(self):
+        return f"CurrenciesLib. {self.length} currencies. Update {datetime.strftime(self.update_date, '%Y-%m-%d')}"
+
+    def __len__(self):
+        return self.length
 
 
 class ExchangeRate(NamedTuple):

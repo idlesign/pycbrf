@@ -1,5 +1,5 @@
 from .banks import Banks
-from .rates import ExchangeRates
+from .rates import ExchangeRates, Currency, CurrenciesLib
 
 
 VERSION = (1, 1, 0)
