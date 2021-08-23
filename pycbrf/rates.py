@@ -11,21 +11,24 @@ URL_BASE = 'http://www.cbr.ru/scripts/'
 
 
 class Currency(NamedTuple):
-    """
-    Represents a currency.
+    """Represents a foreign currency.
 
-    id:
-        Internal code of the Bank of Russia, like 'R01010'
-    name_eng:
-        Currency name in English, like 'Australian Dollar'
-    name_ru:
-        Currency name in Russian, like 'Австралийский доллар'
-    par:
-        Nominal exchange rate, like 1
-    num:
-        ISO 4217 currency numeric code, like '036'
-    code:
-        ISO 4217 currency alphabetic code, like 'AUD'
+    Attributes: # noqa
+        id (str): Internal code of the Bank of Russia.
+        name_eng (str): Currency name in English.
+        name_ru (str): Currency name in Russian.
+        par (Decimal): Nominal exchange rate.
+        num (str, optional): ISO 4217 currency numeric code.
+        code (str, optional): ISO 4217 currency alphabetic code.
+
+    Examples:
+        Currency(
+            id='R01010',
+            name_ru='Австралийский доллар',
+            name_eng='Australian Dollar',
+            num='036',
+            code='AUD',
+            par=Decimal('1'))
     """
 
     id: str
@@ -43,7 +46,14 @@ class Currency(NamedTuple):
 
 
 class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
-    """Singleton class represents library of Currency"""
+    """Singleton class represents library of Currency
+
+    Attributes:
+        length (int): the number of different currencies in the library
+        update_date (datetime): date of loading the latest information from www.cbr.ru
+        currencies (dict of Currency):
+            a {Union[Currency.id, Currency.num, Currency.code]: Currency} dictionary for all currencies
+    """
 
     def __init__(self):
         self.length = 0
@@ -52,12 +62,14 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
         self.update()
 
     def update(self):
+        """Get and parse actual data from the www.cbr.ru."""
         raw_data = self._get_data()
         self.currencies = self._parse(raw_data)
         self.update_date = datetime.now()
 
     @classmethod
     def _get_data(cls) -> Tuple[bytes, bytes]:
+        """Get XML byte string from www.cbr.ru for dayly and monthly update currencies."""
         url = f"{URL_BASE}XML_valFull.asp"
 
         LOG.debug(f'Getting update currencies from {url} ...')
@@ -71,6 +83,7 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
         return daily_update_data, monthly_update_data
 
     def _parse(self, data: Tuple[bytes, bytes]) -> Dict[str, 'Currency']:
+        """Parse XML bytes strings from www.cbr.ru to dict of Currencies."""
         currencies = {}
         counter = 0
 
@@ -89,10 +102,10 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
                     name_eng=props['EngName'],
                     name_ru=props['Name'],
                     code=props['ISO_Char_Code'],
-                    # code like '036' parse like '36', so it needs format to ISO 4217, also
-                    # data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
-                    # So additional If-statement was added to exclude format None
-                    num=self.format_num_code(props['ISO_Num_Code']) if props['ISO_Num_Code'] else None,
+                    # ISO numeric code like '036' is loaded like '36', so it needs format to ISO 4217,
+                    # also data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
+                    # additional If-statement was added to exclude format None
+                    num=self.format_num_code(_) if (_ := props['ISO_Num_Code']) else None,
                     par=Decimal(props['Nominal']),
                 )
 
@@ -110,13 +123,15 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
         return currencies
 
     @staticmethod
-    def format_num_code(num: int):
+    def format_num_code(num: Union[int, str]):
+        """Format integer or invalid string numeric code to ISO 4217 currency numeric code."""
         num_ = num
         if isinstance(num_, str):
             num_ = int(num_)
         return "{:03}".format(num_)
 
-    def __getitem__(self, item: str) -> Optional['Currency']:
+    def __getitem__(self, item: Union[int, str]) -> Optional['Currency']:
+        """Returns Currency by dictionary lookup, converting the argument to ISO format."""
         item_ = item
         if not item:
             return None
