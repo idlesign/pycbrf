@@ -139,10 +139,10 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
             item_ = self.format_num_code(item_)
         item_ = item_.lower()
 
-        return self.currencies.get(item_.lower())
+        return self.currencies.get(item_)
 
     def __str__(self):
-        return f"CurrenciesLib. {self.length} currencies. Update {datetime.strftime(self.update_date, '%Y-%m-%d')}"
+        return f"CurrenciesLib of {self.length} currencies. Update {datetime.strftime(self.update_date, '%Y-%m-%d')}"
 
     def __len__(self):
         return self.length
