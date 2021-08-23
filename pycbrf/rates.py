@@ -4,7 +4,8 @@ from logging import getLogger
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 from xml.etree import ElementTree
 
-from .utils import SingletonMeta, WithRequests
+from .exceptions import WrongArguments, CurrencyNotExists, ExchangeRateNotExists
+from .utils import SingletonMeta, WithRequests, FormatMixin
 
 LOG = getLogger(__name__)
 URL_BASE = 'http://www.cbr.ru/scripts/'
@@ -36,7 +37,7 @@ class Currency(NamedTuple):
     name_eng: str
     num: str
     code: str
-    par: Decimal
+    nominal: Decimal
 
     def __hash__(self):
         return hash((self.id, self.num, self.code))
@@ -45,12 +46,14 @@ class Currency(NamedTuple):
         return isinstance(cls, type(self)) and (cls.id, cls.num, cls.code) == (self.id, self.num, self.code)
 
 
-class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
+class CurrenciesLib(WithRequests, FormatMixin, metaclass=SingletonMeta):
     """Singleton class represents library of Currency
 
     Attributes:
-        length (int): the number of different currencies in the library
-        update_date (datetime): date of loading the latest information from www.cbr.ru
+        length (int):
+            the number of different currencies in the library
+        update_date (datetime):
+            date of loading the latest information from www.cbr.ru
         currencies (dict of Currency):
             a {Union[Currency.id, Currency.num, Currency.code]: Currency} dictionary for all currencies
     """
@@ -67,6 +70,10 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
         self.currencies = self._parse(raw_data)
         self.update_date = datetime.now()
 
+    def add(self, currency: Currency):
+        if isinstance(currency, Currency):
+            self.currencies.update(self._make_currency_pack(currency))
+
     @classmethod
     def _get_data(cls) -> Tuple[bytes, bytes]:
         """Get XML byte string from www.cbr.ru for dayly and monthly update currencies."""
@@ -82,7 +89,22 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
 
         return daily_update_data, monthly_update_data
 
-    def _parse(self, data: Tuple[bytes, bytes]) -> Dict[str, 'Currency']:
+    @staticmethod
+    def _make_currency_pack(currency):
+        """Creates a dict of three elements from the currency with the keys: id, code and num if they exists"""
+        pack = dict()
+
+        pack[currency.id.lower()] = currency
+        # Data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
+        # So additional If-statements were added to exclude None from the 'codes'.
+        if currency.code:
+            pack[currency.code.lower()] = currency
+        if currency.num:
+            pack[currency.num] = currency
+
+        return pack
+
+    def _parse(self, data: Tuple[bytes, bytes]) -> Dict[str, Currency]:
         """Parse XML bytes strings from www.cbr.ru to dict of Currencies."""
         currencies = {}
         counter = 0
@@ -105,41 +127,31 @@ class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
                     # ISO numeric code like '036' is loaded like '36', so it needs format to ISO 4217,
                     # also data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
                     # additional If-statement was added to exclude format None
-                    num=self.format_num_code(_) if (_ := props['ISO_Num_Code']) else None,
-                    par=Decimal(props['Nominal']),
+                    num=self._format_num_code(_) if (_ := props['ISO_Num_Code']) else None,
+                    nominal=Decimal(props['Nominal']),
                 )
 
                 counter += 1
-                currencies[currency.id.lower()] = currency
-                # Data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
-                # So additional If-statements were added to exclude None from the 'codes'.
-                if currency.code:
-                    currencies[currency.code.lower()] = currency
-                if currency.num:
-                    currencies[currency.num] = currency
+                currencies.update(self._make_currency_pack(currency))
 
         self.length = counter
         LOG.debug(f"Parsed: {self.length} currencies")
         return currencies
 
-    @staticmethod
-    def format_num_code(num: Union[int, str]):
-        """Format integer or invalid string numeric code to ISO 4217 currency numeric code."""
-        num_ = num
-        if isinstance(num_, str):
-            num_ = int(num_)
-        return "{:03}".format(num_)
-
-    def __getitem__(self, item: Union[int, str]) -> Optional['Currency']:
+    def __getitem__(self, item: Union[int, str]) -> Optional[Currency]:
         """Returns Currency by dictionary lookup, converting the argument to ISO format."""
-        item_ = item
         if not item:
-            return None
-        if isinstance(item_, int) or (isinstance(item_, str) and len(item_) < 3):
-            item_ = self.format_num_code(item_)
+            raise WrongArguments(f"You must pass ISO code, numeric code or code the Bank of Russia of currency or "
+                                 f"Currency instance. Not {'None' if item is None else 'empty string'}.")
+        item_ = self._format_num_code(item)
         item_ = item_.lower()
 
-        return self.currencies.get(item_)
+        try:
+            currency = self.currencies[item_]
+        except KeyError:
+            raise CurrencyNotExists()
+
+        return currency
 
     def __str__(self):
         return f"CurrenciesLib of {self.length} currencies. Update {datetime.strftime(self.update_date, '%Y-%m-%d')}"
