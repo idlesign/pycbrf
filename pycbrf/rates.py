@@ -35,6 +35,12 @@ class Currency(NamedTuple):
     code: str
     par: Decimal
 
+    def __hash__(self):
+        return hash((self.id, self.num, self.code))
+
+    def __eq__(self, cls):
+        return isinstance(cls, type(self)) and (cls.id, cls.num, cls.code) == (self.id, self.num, self.code)
+
 
 class CurrenciesLib(WithRequests, metaclass=SingletonMeta):
     """Singleton class represents library of Currency"""
