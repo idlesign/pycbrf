@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 import pytest
@@ -204,3 +204,71 @@ def test_beta_multicurrencies_exchange_rates():
     assert rates['r01090'].num == '974'
     assert rates['974'].code == 'BYR'
     assert rates[974].nominal == Decimal(10000)
+
+
+def test_beta_multidate_exchange_rates():
+    # test with currency without dates, for today
+    rates = BetaExchangeRates(currency='USD')
+
+    assert rates.date_from == date.today()
+    assert rates.date_from == date.today()
+    assert not rates.is_multicurrency
+    assert len(rates) in (0, 1)
+
+    # test with specific date
+    date_check = date(year=2021, month=8, day=24)
+    rates = BetaExchangeRates(date_check, currency='EUR')
+
+    assert len(rates) == 1
+    assert rates[date_check].id == 'R01239'
+    assert rates[datetime.now().date()].name_ru == 'Евро'
+    assert rates['2021-08-24'].name_eng == 'Euro'
+    assert rates['2021-08-24'].num == '978'
+    assert rates['2021-08-24'].code == 'EUR'
+    assert rates['2021-08-24'].nominal == Decimal(1)
+
+    # test with a period of one day
+    rates = BetaExchangeRates('2021-08-10', '2021-08-10', currency='R01215')
+    date_check = date(2021, 8, 10)
+    datetime_check = datetime(2021, 8, 10)
+
+    assert len(rates) == 1
+    assert rates['2021-08-10'].id == 'R01215'
+    assert rates[date_check].name_ru == 'Датская крона'
+    assert rates[datetime_check].name_eng == 'Danish Krone'
+    assert rates['2021-08-10'].num == '208'
+    assert rates['2021-08-10'].code == 'DKK'
+    # this is represents problem of nominals between rate and currency
+    assert rates['2021-08-10'].nominal == Decimal(1)
+    assert rates['2021-08-10'].currency.nominal == Decimal(10)
+
+    # test period of rates
+    rates = BetaExchangeRates('2021-08-01', '2021-08-24', currency=203)
+
+    assert len(rates) == 16
+    assert rates['2021-08-10'].currency.id == 'R01760'
+    assert rates[date_check].currency.name_ru == 'Чешская крона'
+    assert rates[datetime_check].currency.name_eng == 'Czech Koruna'
+    assert rates['2021-08-10'].currency.num == '203'
+    assert rates['2021-08-10'].currency.code == 'CZK'
+    assert rates['2021-08-10'].currency.nominal == Decimal(10)
+    assert rates['2021-08-10'].nominal == Decimal(10)
+    assert rates['2021-08-10'].value == Decimal('34.0109')
+    assert rates['2021-08-10'].rate == Decimal('3.40109')
+
+    # test with a date without rates
+    rates = BetaExchangeRates('2021-08-01', '2021-08-24', currency='R01750')
+    assert len(rates) == 0
+
+    assert not len(rates)
+    with pytest.raises(ExchangeRateNotExists) as e:
+        assert rates[date.today()]
+    assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
+
+    with pytest.raises(ExchangeRateNotExists) as e:
+        assert rates['2021-08-23']
+    assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
+
+    with pytest.raises(ExchangeRateNotExists) as e:
+        assert rates['2021-08-24']
+    assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
