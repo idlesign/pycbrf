@@ -51,5 +51,5 @@ class FormatMixin:
     @staticmethod
     def _date_from_string(date):
         if isinstance(date, str):
-            return datetime.strptime(date, '%Y-%m-%d')
+            return datetime.strptime(date, '%Y-%m-%d').date()
         return date
