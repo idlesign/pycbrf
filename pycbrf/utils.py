@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Union
+from datetime import datetime, date
+from typing import Union, Optional
 
 import requests
 
@@ -49,7 +49,9 @@ class FormatMixin:
         return num
 
     @staticmethod
-    def _date_from_string(date):
-        if isinstance(date, str):
-            return datetime.strptime(date, '%Y-%m-%d').date()
-        return date
+    def _date_from_string(date_: Union[str, datetime, date, None]) -> Optional[date]:
+        if isinstance(date_, str):
+            return datetime.strptime(date_, '%Y-%m-%d').date()
+        if isinstance(date_, datetime):
+            return date_.date()
+        return date_

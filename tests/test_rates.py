@@ -103,7 +103,9 @@ def test_currencieslib():
 
 
 def test_beta_exchange_rates_wrong_args():
+    # dates of period without a currency
     pytest.raises(WrongArguments, BetaExchangeRates, '2021-08-22', '2021-08-25')
+    # start date is later than end date
     pytest.raises(WrongArguments, BetaExchangeRates, '2021-08-24', '2021-08-22')
 
 
@@ -163,6 +165,8 @@ def test_beta_multicurrencies_exchange_rates():
     assert rates['r01350'].currency.num == '124'
     assert rates['124'].currency.code == 'CAD'
     assert rates[124].currency.nominal == Decimal(1)
+    assert rates['CAD'].value == Decimal('57.5885')
+    assert rates['CAD'].rate == Decimal('57.5885')
 
     assert rates['usd'].id == 'R01235'
     assert rates['USD'].name_ru == 'Доллар США'
@@ -170,6 +174,8 @@ def test_beta_multicurrencies_exchange_rates():
     assert rates['r01235'].num == '840'
     assert rates['840'].code == 'USD'
     assert rates[840].nominal == Decimal(1)
+    assert rates['USD'].value == Decimal('74.3640')
+    assert rates['USD'].rate == Decimal('74.3640')
 
     # test with the request date matching the response date
     rates = BetaExchangeRates('2021-08-24')
@@ -185,13 +191,17 @@ def test_beta_multicurrencies_exchange_rates():
     assert rates['r01335'].currency.num == '398'
     assert rates['398'].currency.code == 'KZT'
     assert rates[398].currency.nominal == Decimal(100)
+    assert rates['KZT'].value == Decimal('17.3926')
+    assert rates['KZT'].rate == Decimal('0.173926')
 
-    assert rates['MDL'].id == 'R01500'
+    assert rates['mdl'].id == 'R01500'
     assert rates['MDL'].name_ru == 'Молдавский лей'
     assert rates['R01500'].name_eng == 'Moldova Lei'
     assert rates['r01500'].num == '498'
     assert rates['498'].code == 'MDL'
     assert rates[498].nominal == Decimal(10)
+    assert rates['MDL'].value == Decimal('41.9277')
+    assert rates['MDL'].rate == Decimal('4.19277')
 
     # test with a very old date with a currency that is not in the CurrenciesLib
     lib = CurrenciesLib()
@@ -206,11 +216,13 @@ def test_beta_multicurrencies_exchange_rates():
     assert not rates['BYR'].dates_match
 
     assert rates['BYR'].id == 'R01090'
-    assert rates['byr'].name_ru == 'Белорусских рублей'
-    assert rates['R01090'].name_eng == 'Белорусских рублей'
+    assert rates['byr'].name_ru == 'Belarussian Ruble'
+    assert rates['R01090'].name_eng == 'Belarussian Ruble'
     assert rates['r01090'].num == '974'
     assert rates['974'].code == 'BYR'
     assert rates[974].nominal == Decimal(10000)
+    assert rates['BYR'].value == Decimal('32.6582')
+    assert rates['BYR'].rate == Decimal('0.00326582')
 
 
 def test_beta_multidate_exchange_rates():
@@ -233,6 +245,8 @@ def test_beta_multidate_exchange_rates():
     assert rates['2021-08-24'].num == '978'
     assert rates['2021-08-24'].code == 'EUR'
     assert rates['2021-08-24'].nominal == Decimal(1)
+    assert rates['2021-08-24'].value == Decimal('86.7838')
+    assert rates['2021-08-24'].rate == Decimal('86.7838')
 
     # test with a period of one day
     rates = BetaExchangeRates('2021-08-10', '2021-08-10', currency='R01215')
@@ -245,8 +259,13 @@ def test_beta_multidate_exchange_rates():
     assert rates[datetime_check].name_eng == 'Danish Krone'
     assert rates['2021-08-10'].num == '208'
     assert rates['2021-08-10'].code == 'DKK'
-    # this is represents problem of nominals between rate and currency
     assert rates['2021-08-10'].nominal == Decimal(1)
+    assert rates['2021-08-10'].value == Decimal('11.6245')
+    assert rates['2021-08-10'].rate == Decimal('11.6245')
+
+    # this is represents problem of nominals between rate and currency
+    # That is the problem of the Bank of Russia library.
+    # It does not affect the rate, just need to know about it
     assert rates['2021-08-10'].currency.nominal == Decimal(10)
 
     # test period of rates

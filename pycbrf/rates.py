@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from decimal import Decimal
 from logging import getLogger
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Type
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 from xml.etree import ElementTree
 
 from .exceptions import WrongArguments, CurrencyNotExists, ExchangeRateNotExists
@@ -52,7 +52,7 @@ class CurrenciesLib(WithRequests, FormatMixin, metaclass=SingletonMeta):
     Attributes:
         length (int):
             the number of different currencies in the library
-        update_date (date):
+        update_date (datetime):
             date of loading the latest information from www.cbr.ru
         currencies (dict of Currency):
             a {Union[Currency.id, Currency.num, Currency.code]: Currency} dictionary for all currencies
@@ -71,6 +71,7 @@ class CurrenciesLib(WithRequests, FormatMixin, metaclass=SingletonMeta):
         self.update_date = datetime.now()
 
     def add(self, currency: Currency):
+        """Add a new currency to the library or update an existing currency"""
         if isinstance(currency, Currency):
             self.currencies.update(self._make_currency_pack(currency))
 
@@ -90,7 +91,7 @@ class CurrenciesLib(WithRequests, FormatMixin, metaclass=SingletonMeta):
         return daily_update_data, monthly_update_data
 
     @staticmethod
-    def _make_currency_pack(currency):
+    def _make_currency_pack(currency: Currency) -> Dict[str, Currency]:
         """Creates a dict of three elements from the currency with the keys: id, code and num if they exists"""
         pack = dict()
 
@@ -138,7 +139,7 @@ class CurrenciesLib(WithRequests, FormatMixin, metaclass=SingletonMeta):
         LOG.debug(f"Parsed: {self.length} currencies")
         return currencies
 
-    def __getitem__(self, value: Union[int, str]) -> Optional[Currency]:
+    def __getitem__(self, value: Union[int, str]) -> Currency:
         """Returns Currency by dictionary lookup, converting the argument to ISO format."""
         if not value:
             raise WrongArguments(f"You must pass ISO code, numeric code or code the Bank of Russia of currency or "
@@ -167,14 +168,19 @@ class BetaExchangeRate(NamedTuple):
     Attributes: # noqa
         curency (Currency):
             Currency for which the rate is fetched.
-        date (datetime.date):
+        date (date):
             Date of the exchange rate.
         nominal (Decimal):
-            Nominal exchange rate
+            Nominal exchange rate.
         value (Decimal):
-            Official exchange rates on selected date against the ruble
+            Official exchange rates on selected date against the ruble.
         rate (Decimal):
-            Reduced exchange rate
+            Reduced exchange rate.
+        date_requested (date):
+            The date on which the rates are requested
+        date_received (date):
+            The date of the rates that was returned from the Central Bank of Russia
+            See dates_match attribute for details.
         dates_match (bool):
             Returns whether the requested rate date and response rate date are the same.
             Because the Central Bank of Russia does not change rates on weekends and holidays.
@@ -182,13 +188,13 @@ class BetaExchangeRate(NamedTuple):
             The rates of holiday is set as equal on the last working day before the holidays.
     """
     currency: Currency
-    date: datetime.date
+    date: date
     nominal: Decimal
     value: Decimal
     rate: Decimal
     date_requested: date
     date_received: date
-    dates_match: Optional[bool]
+    dates_match: bool
 
     @property
     def id(self):
@@ -226,8 +232,7 @@ class BetaExchangeRates(WithRequests, FormatMixin):
             True if the collection contains multicurrency rates for a specific date.
             False if the collection contains rate dynamics for one currency.
         currencies_lib (CurrenciesLib):
-            Library of currencies.
-            Not passed, create during class initialization
+            Library of currencies. Created during initialization.
     """
 
     def __init__(self,
@@ -238,13 +243,13 @@ class BetaExchangeRates(WithRequests, FormatMixin):
                  ):
         """
         Args:
-            date_from:
+            date_from (date, str, None):
                 Date of the exchange rate or start date of the period for the exchange rate dynamics.
                 Python date objects and ISO date '%Y-%m-%d' string are supported
-            date_to:
+            date_to (date, str, None):
                 End date of the period for the exchange rate dynamics
                 Python date objects and ISO date '%Y-%m-%d' string are supported
-            currency:
+            currency (int, str, Currency):
                 Currency for which you need to know the rate.
                 Strings like ISO numeric code, ISO code or code the Bank of Russia or Currency instance are supported.
 
@@ -261,7 +266,11 @@ class BetaExchangeRates(WithRequests, FormatMixin):
             raw_data = self._get_multicurrency_rates_data()
             self.rates = self._parse_multicurrency_rates(raw_data)
 
-    def _check_and_convert_args(self, date_from, date_to, currency) -> Tuple[date, date, Currency]:
+    def _check_and_convert_args(self,
+                                date_from: Union[date, str, None],
+                                date_to: Union[date, str, None],
+                                currency: Union[str, int, Currency]
+                                ) -> Tuple[date, date, Currency]:
         """Checks arguments and converts them to proper formats from strings and integer"""
 
         date_from = self._date_from_string(date_from)
@@ -309,7 +318,7 @@ class BetaExchangeRates(WithRequests, FormatMixin):
         If date_from and date_to are passed, initiate checks.
         """
 
-        url_suffix = 'XML_daily'
+        url_suffix = 'XML_daily_eng'
         params = {
             'date_req': self.date_from.strftime('%d/%m/%Y'),
         }
@@ -319,7 +328,7 @@ class BetaExchangeRates(WithRequests, FormatMixin):
         return raw_data
 
     @classmethod
-    def _get_data(cls, suffix, params) -> bytes:
+    def _get_data(cls, suffix: str, params: Dict[str, str]) -> bytes:
         """Returns XML string from link"""
         url = f"{URL_BASE}{suffix}.asp"
 
@@ -330,7 +339,7 @@ class BetaExchangeRates(WithRequests, FormatMixin):
 
         return data
 
-    def _parse_rate_dynamics(self, data) -> Dict[date, BetaExchangeRate]:
+    def _parse_rate_dynamics(self, data: bytes) -> Dict[date, BetaExchangeRate]:
         """Parse raw XML strings with rate dynamics to the dict of BetaExchangeRates"""
         LOG.debug('Parsing rate dynamics data ...')
 
@@ -363,7 +372,7 @@ class BetaExchangeRates(WithRequests, FormatMixin):
 
         return result
 
-    def _parse_multicurrency_rates(self, data) -> Dict[Currency, BetaExchangeRate]:
+    def _parse_multicurrency_rates(self, data: bytes) -> Dict[Currency, BetaExchangeRate]:
         """Parse raw XML strings with multicurrency reates to the dict of BetaExchangeRates"""
         LOG.debug('Parsing multicurrency reates data ...')
 
@@ -425,13 +434,9 @@ class BetaExchangeRates(WithRequests, FormatMixin):
                                  f"Not {'None' if value is None else 'empty string'}.")
 
         if self.is_multicurrency:
-            key_str = self._format_num_code(value)
-            key = self.currencies_lib[key_str]
+            key = self.currencies_lib[value]
         else:
-            if isinstance(value, datetime):
-                key = value.date()
-            else:
-                key = self._date_from_string(value)
+            key = self._date_from_string(value)
 
         try:
             return self.rates[key]
