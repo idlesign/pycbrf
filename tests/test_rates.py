@@ -113,20 +113,27 @@ def test_beta_multicurrencies_exchange_rates():
 
     assert len(rates) > 0
 
-    with pytest.raises(CurrencyNotExists):
-        result = rates['dummy']
+    with pytest.raises(CurrencyNotExists) as e:
+        rates['dummy']
+    assert e.value.message == 'There is no such currency within CurrenciesLib.'
 
-    with pytest.raises(WrongArguments):
-        result = rates['']
+    with pytest.raises(WrongArguments) as e:
+        rates['']
+    assert e.value.message == "Args must be ISO code, numeric code, code the Bank of Russia of currency, " \
+                              "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not empty string."
 
-    with pytest.raises(WrongArguments):
-        result = rates[None]
+    with pytest.raises(WrongArguments) as e:
+        rates[None]
+    assert e.value.message == "Args must be ISO code, numeric code, code the Bank of Russia of currency, " \
+                              "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not None."
 
-    with pytest.raises(ExchangeRateNotExists):
-        result = rates['AOA']
+    with pytest.raises(ExchangeRateNotExists) as e:
+        rates['AOA']
+    assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
 
-    with pytest.raises(ExchangeRateNotExists):
-        result = rates[971]
+    with pytest.raises(ExchangeRateNotExists) as e:
+        rates[971]
+    assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
 
     assert rates['eur'].id == 'R01239'
     assert rates['EUR'].name_ru == 'Евро'
