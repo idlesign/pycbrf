@@ -1,4 +1,4 @@
-from datetime import datetime, date
+import datetime as dt
 from typing import Union, Optional
 
 import requests
@@ -28,6 +28,7 @@ class WithRequests:
 
 
 class SingletonMeta(type):
+    """Mixin for create Singleton pattern that restricts the instantiation of a class to one "single" instance"""
     _instances = {}
 
     def __call__(cls):
@@ -38,9 +39,12 @@ class SingletonMeta(type):
 
 
 class FormatMixin:
+    """Mixin for various argument formatting"""
+
     @staticmethod
     def _format_num_code(num: Union[int, str]) -> str:
-        """Format integer or invalid string numeric code to ISO 4217 currency numeric code."""
+        """Format integer or invalid string numeric code to ISO 4217 currency numeric code string."""
+
         if isinstance(num, int) or (isinstance(num, str) and len(num) < 3):
             num_ = num
             if isinstance(num_, str):
@@ -49,9 +53,10 @@ class FormatMixin:
         return num
 
     @staticmethod
-    def _date_from_string(date_: Union[str, datetime, date, None]) -> Optional[date]:
-        if isinstance(date_, str):
-            return datetime.strptime(date_, '%Y-%m-%d').date()
-        if isinstance(date_, datetime):
-            return date_.date()
-        return date_
+    def _datetime_from_string(date: Union[str, dt.date, dt.datetime, None]) -> Optional[dt.datetime]:
+        """Format date to datetime.datetime from string and datetime.date"""
+        if isinstance(date, str):
+            date = dt.datetime.strptime(date, '%Y-%m-%d')
+        if isinstance(date, dt.date):
+            date = dt.datetime(date.year, date.month, date.day)
+        return date
