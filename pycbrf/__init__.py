@@ -1,5 +1,5 @@
 from .banks import Banks
-from .rates import Currency, CurrenciesLib, ExchangeRates, ExchangeRateDynamics
+from .rates import Currency, Currencies, ExchangeRates, ExchangeRateDynamics
 
 VERSION = (1, 1, 0)
 """Application version number tuple."""

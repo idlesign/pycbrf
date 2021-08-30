@@ -16,6 +16,7 @@ class WithRequests:
 
     @classmethod
     def _get_response(cls, url: str, **kwargs) -> requests.Response:
+
         kwargs_ = {
             'timeout': cls.req_timeout,
             'headers': {
@@ -45,12 +46,7 @@ class FormatMixin:
     def _format_num_code(num: Union[int, str]) -> str:
         """Format integer or invalid string numeric code to ISO 4217 currency numeric code string."""
 
-        if isinstance(num, int) or (isinstance(num, str) and len(num) < 3):
-            num_ = num
-            if isinstance(num_, str):
-                num_ = int(num_)
-            return "{:03}".format(num_)
-        return num
+        return f'{num}'.zfill(3)
 
     @staticmethod
     def _datetime_from_string(date: Union[str, dt.date, dt.datetime, None]) -> Optional[dt.datetime]:

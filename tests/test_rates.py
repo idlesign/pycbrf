@@ -3,14 +3,68 @@ from decimal import Decimal
 
 import pytest
 
-from pycbrf import ExchangeRates, CurrenciesLib, Currency, ExchangeRateDynamics
-from pycbrf.exceptions import WrongArguments, CurrencyNotExists, ExchangeRateNotExists
+from pycbrf import ExchangeRates, Currencies, Currency, ExchangeRateDynamics
+from pycbrf.exceptions import WrongArguments, CurrencyNotFound, ExchangeRateNotFound
 
 today = dt.datetime.combine(dt.date.today(), dt.time())
+pre_date = dt.datetime.now()
+
+
+def test_rates():
+
+    rates = ExchangeRates('2016-06-26', locale_en=True)
+
+    assert str(rates.date_requested) == '2016-06-26 00:00:00'
+    assert str(rates.date_received) == '2016-06-25 00:00:00'
+    assert not rates.dates_match
+
+    assert rates['dummy'] is None
+    assert rates[''] is None
+    assert rates[None] is None
+    assert rates['USD'].name == 'US Dollar'
+    assert rates['R01235'].name == 'US Dollar'
+    assert rates['840'].name == 'US Dollar'
+
+    rates = ExchangeRates('2016-06-25')
+
+    assert str(rates.date_requested) == '2016-06-25 00:00:00'
+    assert str(rates.date_received) == '2016-06-25 00:00:00'
+    assert rates.dates_match
+
+    assert rates['USD'].name == 'Доллар США'
+    assert rates['R01235'].name == 'Доллар США'
+    assert rates['840'].name == 'Доллар США'
+
+    """Raising exceptions is disabled for backward compatibility."""
+    # with pytest.raises(CurrencyNotFound) as e:
+    #     rates['dummy']
+    # assert e.value.message == 'There is no such currency within Currencies.'
+    #
+    # with pytest.raises(WrongArguments) as e:
+    #     rates['']
+    # assert e.value.message == (
+    #     "Args must be ISO code, numeric code, code the Bank of Russia of currency, "
+    #     "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not empty string."
+    # )
+    #
+    # with pytest.raises(WrongArguments) as e:
+    #     rates[None]
+    # assert e.value.message == (
+    #     "Args must be ISO code, numeric code, code the Bank of Russia of currency, "
+    #     "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not None."
+    # )
+    #
+    # with pytest.raises(ExchangeRateNotFound) as e:
+    #     rates['AOA']
+    # assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
+    #
+    # with pytest.raises(ExchangeRateNotFound) as e:
+    #     rates[971]
+    # assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
+
 
 def test_currencieslib():
-    pre_date = dt.datetime.now()
-    lib = CurrenciesLib()
+    lib = Currencies()
     aud = Currency(
         id='R01010',
         name_eng='Australian Dollar',
@@ -22,23 +76,21 @@ def test_currencieslib():
 
     assert lib.update_date > pre_date
 
-    with pytest.raises(WrongArguments) as e:
+    with pytest.raises(CurrencyNotFound) as e:
         lib[None]
-    assert e.value.message == 'You must pass ISO code, numeric code or code the Bank of Russia of currency' \
-                              ' or Currency instance. Not None.'
+    assert e.value.message == 'Currency "None" not found.'
 
-    with pytest.raises(WrongArguments) as e:
+    with pytest.raises(CurrencyNotFound) as e:
         lib['']
-    assert e.value.message == 'You must pass ISO code, numeric code or code the Bank of Russia of currency' \
-                              ' or Currency instance. Not empty string.'
+    assert e.value.message == 'Currency "" not found.'
 
-    with pytest.raises(CurrencyNotExists) as e:
+    with pytest.raises(CurrencyNotFound) as e:
         lib['dummy']
-    assert e.value.message == 'There is no such currency within CurrenciesLib.'
+    assert e.value.message == 'There is no such currency within Currencies.'
 
-    with pytest.raises(CurrencyNotExists) as e:
+    with pytest.raises(CurrencyNotFound) as e:
         lib['None']
-    assert e.value.message == 'There is no such currency within CurrenciesLib.'
+    assert e.value.message == 'There is no such currency within Currencies.'
 
     assert lib['aud'] == aud
     assert lib['AUD'] == aud
@@ -80,13 +132,13 @@ def test_currencieslib():
     lib.update()
     assert lib.update_date > post_date
 
-    # test with a very old date with a currency that is not in the CurrenciesLib
+    # test with a very old date with a currency that is not in the Currencies
     # added by ExchangeRates automatically
 
     """Raising exceptions is disabled for backward compatibility."""
-    with pytest.raises(CurrencyNotExists) as e:
+    with pytest.raises(CurrencyNotFound) as e:
         lib['BYR']
-    assert e.value.message == 'There is no such currency within CurrenciesLib.'
+    assert e.value.message == 'There is no such currency within Currencies.'
 
     rates = ExchangeRates('2016-06-26', locale_en=True)
 
@@ -98,56 +150,6 @@ def test_currencieslib():
     assert rates[974].par == Decimal(10000)
     assert rates['BYR'].value == Decimal('32.6582')
     assert rates['BYR'].rate == Decimal('0.00326582')
-
-
-def test_rates():
-    rates = ExchangeRates('2016-06-26', locale_en=True)
-
-    # returns None for backward compatibility
-    assert rates['dummy'] is None
-    assert rates[''] is None
-    assert rates[None] is None
-
-    """Raising exceptions is disabled for backward compatibility."""
-    # with pytest.raises(CurrencyNotExists) as e:
-    #     rates['dummy']
-    # assert e.value.message == 'There is no such currency within CurrenciesLib.'
-    #
-    # with pytest.raises(WrongArguments) as e:
-    #     rates['']
-    # assert e.value.message == "Args must be ISO code, numeric code, code the Bank of Russia of currency, " \
-    #                           "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not empty string."
-    #
-    # with pytest.raises(WrongArguments) as e:
-    #     rates[None]
-    # assert e.value.message == "Args must be ISO code, numeric code, code the Bank of Russia of currency, " \
-    #                           "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not None."
-    #
-    # with pytest.raises(ExchangeRateNotExists) as e:
-    #     rates['AOA']
-    # assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
-    #
-    # with pytest.raises(ExchangeRateNotExists) as e:
-    #     rates[971]
-    # assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
-
-    assert str(rates.date_requested) == '2016-06-26 00:00:00'
-    assert str(rates.date_received) == '2016-06-25 00:00:00'
-    assert not rates.dates_match
-
-    assert rates['USD'].name == 'US Dollar'
-    assert rates['R01235'].name == 'US Dollar'
-    assert rates['840'].name == 'US Dollar'
-
-    rates = ExchangeRates('2016-06-25')
-
-    assert str(rates.date_requested) == '2016-06-25 00:00:00'
-    assert str(rates.date_received) == '2016-06-25 00:00:00'
-    assert rates.dates_match
-
-    assert rates['USD'].name == 'Доллар США'
-    assert rates['R01235'].name == 'Доллар США'
-    assert rates['840'].name == 'Доллар США'
 
 
 def test_exchange_rates_extra():
@@ -295,14 +297,14 @@ def test_exchange_rate_dynamics():
     assert len(rates) == 0
 
     assert not len(rates)
-    with pytest.raises(ExchangeRateNotExists) as e:
+    with pytest.raises(ExchangeRateNotFound) as e:
         assert rates[today]
     assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
 
-    with pytest.raises(ExchangeRateNotExists) as e:
+    with pytest.raises(ExchangeRateNotFound) as e:
         assert rates['2021-08-23']
     assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
 
-    with pytest.raises(ExchangeRateNotExists) as e:
+    with pytest.raises(ExchangeRateNotFound) as e:
         assert rates['2021-08-24']
     assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'

@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from io import BytesIO
 from logging import getLogger
-from typing import NamedTuple, List, Union, Optional
+from typing import NamedTuple, List, Union, Optional, Set
 from xml.etree import ElementTree
 from zipfile import ZipFile
 
@@ -90,13 +90,13 @@ class Account:
     __slots__ = ['number', 'type', 'type_str', 'date_added', 'date_removed', 'restrictions']
 
     def __init__(
-            self,
-            *,
-            number: str,
-            type: str,
-            date_added: Optional[datetime.date],
-            date_removed: Optional[datetime.date],
-            restrictions: List['Restriction'],
+        self,
+        *,
+        number: str,
+        type: str,
+        date_added: Optional[datetime.date],
+        date_removed: Optional[datetime.date],
+        restrictions: List['Restriction'],
     ):
         self.number = number
         self.type = type

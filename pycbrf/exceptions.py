@@ -1,3 +1,4 @@
+
 class PycbrfException(Exception):
     """Base exception."""
 
@@ -9,14 +10,14 @@ class WrongArguments(PycbrfException, TypeError):
         self.message = message
 
 
-class CurrencyNotExists(PycbrfException, KeyError):
-    """The exception is raised if Currency does not found in CurrenciesLib"""
+class CurrencyNotFound(PycbrfException, KeyError):
+    """The exception is raised if Currency does not found in Currencies"""
 
     def __init__(self, message=None):
-        self.message = message or 'There is no such currency within CurrenciesLib.'
+        self.message = message or 'There is no such currency within Currencies.'
 
 
-class ExchangeRateNotExists(PycbrfException, KeyError):
+class ExchangeRateNotFound(PycbrfException, KeyError):
     """The exception is raised if ExchangeRate does not found in ExchangeRates"""
 
     def __init__(self, message=None):
