@@ -1,4 +1,4 @@
-import datetime as dt
+from datetime import date, datetime
 from typing import Union, Optional
 
 import requests
@@ -16,7 +16,6 @@ class WithRequests:
 
     @classmethod
     def _get_response(cls, url: str, **kwargs) -> requests.Response:
-
         kwargs_ = {
             'timeout': cls.req_timeout,
             'headers': {
@@ -49,10 +48,10 @@ class FormatMixin:
         return f'{num}'.zfill(3)
 
     @staticmethod
-    def _datetime_from_string(date: Union[str, dt.date, dt.datetime, None]) -> Optional[dt.datetime]:
+    def _datetime_from_string(date_: Union[str, date, datetime, None]) -> Optional[datetime]:
         """Format date to datetime.datetime from string and datetime.date"""
-        if isinstance(date, str):
-            date = dt.datetime.strptime(date, '%Y-%m-%d')
-        if isinstance(date, dt.date):
-            date = dt.datetime(date.year, date.month, date.day)
-        return date
+        if isinstance(date_, str):
+            date_ = datetime.strptime(date_, '%Y-%m-%d')
+        if isinstance(date_, date):
+            date_ = datetime(date_.year, date_.month, date_.day)
+        return date_

@@ -149,3 +149,6 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
 
     def __str__(self):
         return f"Currencies. Update {self.update_date}"
+
+
+CURRENCIES = Currencies()

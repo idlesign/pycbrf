@@ -1,11 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
 from logging import getLogger
-from typing import Dict, NamedTuple, Optional, Tuple, Union
+from typing import Dict, NamedTuple, Optional, Union
 from xml.etree import ElementTree
 
 from .constants import URL_BASE
-from .currencies import Currency, Currencies
+from .currencies import Currency, CURRENCIES
 from .exceptions import CurrencyNotFound, ExchangeRateNotFound, WrongArguments
 from .utils import FormatMixin, WithRequests
 
@@ -25,9 +25,6 @@ class ExchangeRate(NamedTuple):
     on_date: datetime
     currency: Currency
     name: str  # exists for backward compatibility.
-    value: Decimal
-    par: Decimal
-    rate: Decimal
 
     @property
     def id(self):
@@ -42,12 +39,16 @@ class ExchangeRate(NamedTuple):
         return self.currency.name_eng
 
     @property
+    def code(self):
+        return self.currency.code
+
+    @property
     def num(self):
         return self.currency.num
 
-    @property
-    def code(self):
-        return self.currency.code
+    value: Decimal
+    par: Decimal
+    rate: Decimal
 
 
 class ExchangeRates(WithRequests, FormatMixin):
@@ -58,7 +59,6 @@ class ExchangeRates(WithRequests, FormatMixin):
     :param dates_match: Returns whether the requested rate date and response rate date are the same.
     :param rates: Dictionary of ExchangeRate parsed from the server.
     :param length: Number of exchange rates.
-    :param currencies_lib: Library of currencies.
 
     :Example:
 
@@ -82,7 +82,6 @@ class ExchangeRates(WithRequests, FormatMixin):
         :param on_date: Date to get exchange rates for.
         :param locale_en: If not set ExchangeRate.name will be provided in Russian, otherwise in English.
         """
-        self.currencies_lib = Currencies()
         self.length = 0
 
         if on_date:
@@ -91,13 +90,18 @@ class ExchangeRates(WithRequests, FormatMixin):
             today = date.today()
             on_date = datetime(today.year, today.month, today.day)  # For backward compatibility, the time is 00:00
 
-        self.date_requested = on_date
-
         raw_data = self._get_data(on_date, locale_en)
-        date_received, rates = self._parse(raw_data, locale_en)
+        parsed = self._parse(raw_data, locale_en)
 
-        self.date_received: datetime = date_received
-        self.rates: Dict[Currency, ExchangeRate] = rates
+        self.date_requested = on_date
+        """Date requested by user."""
+
+        self.date_received: datetime = parsed['date']
+        """Date returned by Bank of Russia."""
+
+        self.rates: Dict[Currency, ExchangeRate] = parsed['rates']
+        """Rates fetched from server as a list."""
+
         self.dates_match: bool = (self.date_requested == self.date_received)
 
     def __getitem__(self, item: Union[str, int, Currency]) -> Optional[ExchangeRate]:
@@ -107,7 +111,7 @@ class ExchangeRates(WithRequests, FormatMixin):
         :return: The ExchangeRate instance for the requested currency
         """
         try:
-            key: Optional[Currency] = self.currencies_lib[item]
+            key: Optional[Currency] = CURRENCIES[item]
         except (WrongArguments, CurrencyNotFound):
             return None  # return None, not an exception, is made for backward compatibility.
 
@@ -116,221 +120,75 @@ class ExchangeRates(WithRequests, FormatMixin):
         except ExchangeRateNotFound:
             return None  # return None, not an exception, is made for backward compatibility.
 
-    def __len__(self):
-        return len(self.rates)
+    @staticmethod
+    def _parse(data: bytes, locale_en: bool) -> Dict[str, Union[datetime, Dict[Currency, ExchangeRate]]]:
+        """Parse raw XML strings to the dict of BetaExchangeRates"""
+        LOG.debug('Parsing data ...')
+
+        xml = ElementTree.fromstring(data)
+        meta = xml.attrib
+
+        result = {
+            'date': datetime.strptime(meta['Date'], '%d.%m.%Y'),
+            'rates': {},
+        }
+
+        for currency in xml:
+            props = {}
+            for prop in currency:
+                props[prop.tag] = prop.text
+
+            par = Decimal(props['Nominal'])
+            par_value = Decimal(props['Value'].replace(',', '.'))
+
+            try:
+                currency = CURRENCIES[currency.attrib['ID']]
+            except CurrencyNotFound:
+                # The request for old information may contain a currency
+                # that has already been removed from the Currencies.
+                # In this case, add a new currency to Currencies.
+                currency = Currency(id=currency.attrib['ID'],
+                                    name_eng=props['Name'],
+                                    name_ru=props['Name'],
+                                    code=props['CharCode'],
+                                    num=props['NumCode'],
+                                    par=Decimal(props['Nominal']),
+                                    )
+                CURRENCIES.add(currency)
+
+            name = currency.name_eng if locale_en else currency.name_ru
+
+            result['rates'][currency] = ExchangeRate(
+                on_date=result['date'],
+                currency=currency,
+                name=name,
+                value=par_value,
+                par=par,
+                rate=par_value / par,
+            )
+
+        LOG.debug(f"Parsed: {len(result['rates'])} currencies")
+
+        return result
 
     @classmethod
     def _get_data(cls, on_date: datetime, locale_en: bool) -> bytes:
         """Prepares parameters for the link and returns raw XML"""
         url = f"{URL_BASE}XML_daily{'_eng' if locale_en else ''}.asp"
+
         params = {
             'date_req': on_date.strftime('%d/%m/%Y')
         }
 
+        LOG.debug(f'Getting exchange rates from {url} ...')
+
         response = cls._get_response(url=url, params=params)
-        raw_data = response.content
+        data = response.content
 
-        return raw_data
-
-    def _parse(self, data: bytes, locale_en: bool) -> Tuple[datetime, Dict[Currency, ExchangeRate]]:
-        """Parse raw XML strings to the dict of BetaExchangeRates"""
-        LOG.debug('Parsing data ...')
-
-        xml = ElementTree.fromstring(data)
-
-        date_received = datetime.strptime(xml.attrib['Date'], '%d.%m.%Y')
-
-        result = {}
-
-        for child in xml:
-            params = {}
-            for param in child:
-                params[param.tag] = param.text
-
-            try:
-                currency = self.currencies_lib[child.attrib['ID']]
-            except CurrencyNotFound:
-                # The request for old information may contain a currency
-                # that has already been removed from the Currencies.
-                # In this case, add a new currency to Currencies.
-                currency = Currency(id=child.attrib['ID'],
-                                    name_eng=params['Name'],
-                                    name_ru=params['Name'],
-                                    code=params['CharCode'],
-                                    num=params['NumCode'],
-                                    par=Decimal(params['Nominal']),
-                                    )
-                self.currencies_lib.add(currency)
-
-            name = currency.name_eng if locale_en else currency.name_ru
-            par = Decimal(params['Nominal'])
-            value = Decimal(params['Value'].replace(',', '.'))
-
-            result[currency] = ExchangeRate(
-                on_date=date_received,
-                currency=currency,
-                name=name,
-                value=value,
-                par=par,
-                rate=value / par,
-            )
-
-        LOG.debug(f"Parsed: {len(result)} currencies")
-
-        return date_received, result
+        return data
 
     def __str__(self):
         return f"ExchangeRates of {len(self.rates)} currencies from {self.date_requested}"
 
-
-class ExchangeRateDynamics(WithRequests, FormatMixin):
-    """Receives and stores exchange rates for one currency over a period of time
-
-    :param date_from: Start date of the period for the exchange rate dynamics.
-    :param date_to: End date of the period for the exchange rate dynamics.
-    :param currency: The currency for which the exchange rates were requested.
-    :param rates: Dictionary of ExchangeRate parsed from the server.
-    :param length: Number of exchange rates.
-    :param currencies_lib: Library of currencies.
-
-    :Example:
-
-    Creation:
-        rates = ExchangeRateDynamics(currency='USD')
-        rates = ExchangeRateDynamics('2021-08-24', currency='usd')
-        rates = ExchangeRateDynamics(date(2021, 8, 24), currency='R01235')
-        rates = ExchangeRateDynamics(datetime(2021, 8, 24, 0, 0), currency='r01235')
-        rates = ExchangeRateDynamics('2021-08-01', date(2021, 8, 24), currency='840')
-        rates = ExchangeRateDynamics(date_from='2021-08-24', currency=840)
-    Receiving:
-        By string: 4217 currency alphabetic code: rates('2021-08-24')
-        By Python date: rates(date(2021, 08, 24))
-        By Python datetime: rates(datetime(2021, 08, 24))
-
-    .. note:: The Central Bank of Russia does not change rates on weekends and holidays.
-        Sunday and Monday rates are the same as Saturday rates, but not available.
-        The exchange rates on holidays are the same as on the last business day before the holiday, but not available.
-        Exchange rates on such dates will not be available in the ExchangeRatesDynamics.
-    """
-
-    def __init__(self,
-                 date_from: Union[str, date, datetime, None] = None,
-                 date_to: Union[str, date, datetime, None] = None,
-                 *,
-                 currency: Union[str, int, Currency],
-                 ):
-        """
-        :param date_from: Date of the exchange rate or start date of the period for the exchange rate dynamics.
-            Python date and datetime objects and ISO date '%Y-%m-%d' string are supported.
-        :param date_to: End date of the period for the exchange rate dynamics.
-            Python date and datetime objects and ISO date '%Y-%m-%d' string are supported.
-        :param currency: Currency for which you need to know the rate.
-            Strings like ISO numeric code, ISO code or code the Bank of Russia or Currency instance are supported.
-
-        .. note:: If all arguments are specified, get the rate dynamics between the passed dates.
-            If currency and one date are passed, get the rate of the specified currency at the date.
-            If only currency is passed, get the exchange rate for today.
-        """
-        self.currencies_lib = Currencies()
-        self.length = 0
-
-        self.date_from, self.date_to, self.currency = self._check_and_convert_args(date_from, date_to, currency)
-
-        raw_data = self._get_data(self.currency)
-        rates = self._parse(raw_data)
-
-        self.rates = rates
-
-    def __getitem__(self, item: Union[str, date, datetime]) -> ExchangeRate:
-        """Returns the ExchangeRate by date
-
-        Python date and datetime objects or '%Y-%m-%d' ISO date string are supported.
-        """
-        if not item:
-            raise WrongArguments(f"Args must be ISO code, numeric code, code the Bank of Russia of currency, "
-                                 f"Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string."
-                                 f"Not {'None' if item is None else 'empty string'}.")
-
-        key = self._datetime_from_string(item)
-
-        try:
-            return self.rates[key]
-        except KeyError:
-            raise ExchangeRateNotFound()
-
     def __len__(self):
         return len(self.rates)
-
-    def _check_and_convert_args(self,
-                                date_from: Union[str, date, datetime, None],
-                                date_to: Union[str, date, datetime, None],
-                                currency: Union[str, int, Currency]
-                                ) -> Tuple[datetime, datetime, Currency]:
-        """Checks arguments and converts them to proper formats from strings and integer"""
-        date_from = self._datetime_from_string(date_from)
-        date_to = self._datetime_from_string(date_to)
-
-        if not currency:
-            raise WrongArguments('You must specify a currency if you want to get a range of currency rates.')
-
-        if not date_from and not date_to:  # if both dates are empty
-            today = date.today()
-            date_from = date_to = datetime(today.year, today.month, today.day)  # datetime for unification
-        elif bool(date_from) ^ bool(date_to):  # if any of the dates, but not both (XOR)
-            date_from = date_to = next(filter(lambda x: x, (date_from, date_to)))
-
-        if date_to < date_from:
-            raise WrongArguments('The end date of the period must be later than the start date.')
-
-        if currency and not isinstance(currency, Currency):
-            currency: Currency = self.currencies_lib[currency]
-
-        return date_from, date_to, currency
-
-    def _get_data(self, currency: Currency) -> bytes:
-        """Prepares parameters for the link and returns raw XML"""
-        url = f"{URL_BASE}XML_dynamic.asp"
-        params = {
-            'date_req1': self.date_from.strftime('%d/%m/%Y'),
-            'date_req2': self.date_to.strftime('%d/%m/%Y'),
-            'VAL_NM_RQ': currency.id,
-        }
-
-        response = super()._get_response(url=url, params=params)
-        raw_data = response.content
-
-        return raw_data
-
-    def _parse(self, data: bytes) -> Dict[datetime, ExchangeRate]:
-        """Parse raw XML strings with rate dynamics to the dict of ExchangeRate"""
-        LOG.debug('Parsing data ...')
-
-        xml = ElementTree.fromstring(data)
-        currency = self.currency
-
-        result = {}
-
-        for child in xml:
-            params = {}
-            for param in child:
-                params[param.tag] = param.text
-
-            date_received = datetime.strptime(child.attrib['Date'], '%d.%m.%Y')
-            par = Decimal(params['Nominal'])
-            value = Decimal(params['Value'].replace(',', '.'))
-
-            result[date_received] = ExchangeRate(
-                currency=currency,
-                name=currency.name_eng,
-                on_date=date_received,
-                par=par,
-                value=value,
-                rate=value / par,
-            )
-
-        LOG.debug(f"Parsed: {len(result)} days")
-
-        return result
-
-    def __str__(self):
-        return f"{self.currency.code} ExchangeRateDynamics from {self.date_from} to {self.date_to}"
