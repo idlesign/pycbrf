@@ -52,37 +52,36 @@ class ExchangeRate(NamedTuple):
 
 
 class ExchangeRates(WithRequests, FormatMixin):
-    """Gets and stores exchange rates for different currencies for a selected date
-
-    :param date_requested: The date on which the rates are requested.
-    :param date_received: The date of the rates that was returned from the Central Bank of Russia.
-    :param dates_match: Returns whether the requested rate date and response rate date are the same.
-    :param rates: Dictionary of ExchangeRate parsed from the server.
-    :param length: Number of exchange rates.
-
-    :Example:
-
-    Creation:
-        rates = ExchangeRates()
-        rates = ExchangeRates(date(2021, 08, 24))
-        rates = ExchangeRates(on_date=datetime(2021, 08, 24, 0, 0))
-        rates = ExchangeRates(on_date='2021-08-24', locale_en=True)
-    Receiving:
-        By ISO 4217 currency alphabetic code: rates[AUD], rates[aud]
-        By ISO 4217 currency numeric code: rates['036'], rates['36'], rates[36]
-        By the code of the Central Bank of Russia: rates['R01010'], rates['rR01010']
-
-    .. note:: The Central Bank of Russia does not change rates on weekends and holidays.
-        The Sunday and Monday rates is set as equal as Saturday rate.
-        The rates of holiday is set as equal on the last working day before the holidays.
-    """
 
     def __init__(self, on_date: Union[str, date, datetime, None] = None, locale_en: bool = False):
+        """Fetches exchange rates.
+
+        :Example:
+
+        Various creation options are supported:
+
+        rates = ExchangeRates()  # for today
+        rates = ExchangeRates(date(2021, 08, 24))
+        rates = ExchangeRates(on_date=datetime(2021, 08, 24, 0, 0))
+        rates = ExchangeRates('2016-06-26', locale_en=True)
+
+        Various indexing is supported:
+
+        rates['USD']  # By ISO alpha code
+        rates['R01235']  # By internal Bank of Russia code
+        rates['840']  # By ISO numeric code.
+
+        .. note:: The Central Bank of Russia does not change rates on weekends and holidays.
+            The Sunday and Monday rates is set as equal as Saturday rate.
+            The rates of holiday is set as equal as rates on the first working day after the holidays.
+
+        :param on_date: Date to get rates for.
+            Python date objects and ISO date string are supported.
+            If not set rates on latest available date will be returned (usually tomorrow).
+
+        :param locale_en: Flag to get currency names in English.
+            If not set names will be provided in Russian.
         """
-        :param on_date: Date to get exchange rates for.
-        :param locale_en: If not set ExchangeRate.name will be provided in Russian, otherwise in English.
-        """
-        self.length = 0
 
         if on_date:
             on_date = self._datetime_from_string(on_date)
