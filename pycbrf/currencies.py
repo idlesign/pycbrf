@@ -42,8 +42,8 @@ class Currency(NamedTuple):
     def __hash__(self):
         return hash((self.id, self.num, self.code))
 
-    def __eq__(self, cls):
-        return isinstance(cls, type(self)) and (cls.id, cls.num, cls.code) == (self.id, self.num, self.code)
+    def __eq__(self, obj):
+        return isinstance(obj, type(self)) and (obj.id, obj.num, obj.code) == (self.id, self.num, self.code)
 
 
 class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
