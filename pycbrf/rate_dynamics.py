@@ -20,7 +20,6 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
     :param date_to: End date of the period for the exchange rate dynamics.
     :param currency: The currency for which the exchange rates were requested.
     :param rates: Dictionary of ExchangeRate parsed from the server.
-    :param length: Number of exchange rates.
 
     :Example:
 
@@ -60,7 +59,6 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
             If currency and one date are passed, get the rate of the specified currency at the date.
             If only currency is passed, get the exchange rate for today.
         """
-        self.length = 0
 
         self.date_from, self.date_to, self.currency = self._check_and_convert_args(date_from, date_to, currency)
 
@@ -85,9 +83,6 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
             return self.rates[key]
         except KeyError:
             raise ExchangeRateNotFound()
-
-    def __len__(self):
-        return len(self.rates)
 
     def _check_and_convert_args(self,
                                 date_from: Union[str, date, datetime, None],
@@ -162,3 +157,6 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
 
     def __str__(self):
         return f"{self.currency.code} ExchangeRateDynamics from {self.date_from} to {self.date_to}"
+
+    def __len__(self):
+        return len(self.rates)
