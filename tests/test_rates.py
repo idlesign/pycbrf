@@ -1,9 +1,6 @@
 from decimal import Decimal
 
-import pytest
-
 from pycbrf import ExchangeRates
-from pycbrf.exceptions import CurrencyNotFound, WrongArguments, ExchangeRateNotFound
 
 
 def test_rates():
@@ -102,34 +99,3 @@ def test_exchange_rates_extra():
     assert rates[498].par == Decimal(10)
     assert rates['MDL'].value == Decimal('41.9277')
     assert rates['MDL'].rate == Decimal('4.19277')
-
-
-# def test_raising_exceptions():
-#     """Raising exceptions for ExchangeRates is disabled for backward compatibility."""
-#     rates = ExchangeRates()
-#
-#     with pytest.raises(CurrencyNotFound) as e:
-#         rates['dummy']
-#     assert e.value.message == 'There is no such currency within Currencies.'
-#
-#     with pytest.raises(WrongArguments) as e:
-#         rates['']
-#     assert e.value.message == (
-#         "Args must be ISO code, numeric code, code the Bank of Russia of currency, "
-#         "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not empty string."
-#     )
-#
-#     with pytest.raises(WrongArguments) as e:
-#         rates[None]
-#     assert e.value.message == (
-#         "Args must be ISO code, numeric code, code the Bank of Russia of currency, "
-#         "Currency instance, datetime.date or  or '%Y-%m-%d' ISO date string.Not None."
-#     )
-#
-#     with pytest.raises(ExchangeRateNotFound) as e:
-#         rates['AOA']
-#     assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
-#
-#     with pytest.raises(ExchangeRateNotFound) as e:
-#         rates[971]
-#     assert e.value.message == 'There is no such ExchangeRate within ExchangeRates.'
