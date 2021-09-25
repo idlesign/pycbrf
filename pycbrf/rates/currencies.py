@@ -129,15 +129,19 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
                 for prop in child:
                     props[prop.tag] = prop.text
 
+                num = props['ISO_Num_Code'] or None
+                if num:
+                    # ISO numeric code like '036' is loaded like '36', so it needs to be formatted into ISO 4217,
+                    # also data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
+                    # additional If-statement was added to exclude format None
+                    num = self._format_num_code(num)
+
                 currency = Currency(
                     id=child.attrib['ID'],
                     name_eng=props['EngName'],
                     name_ru=props['Name'],
                     code=props['ISO_Char_Code'],
-                    # ISO numeric code like '036' is loaded like '36', so it needs format to ISO 4217,
-                    # also data from the Bank of Russia contains replaced currencies that do not have ISO attributes.
-                    # additional If-statement was added to exclude format None
-                    num=self._format_num_code(_) if (_ := props['ISO_Num_Code']) else None,
+                    num=num,
                     par=Decimal(props['Nominal']),
                 )
 
