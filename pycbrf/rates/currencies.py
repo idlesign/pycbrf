@@ -5,8 +5,8 @@ from typing import Dict, NamedTuple, Optional, Tuple, Union
 from xml.etree import ElementTree
 
 from .constants import URL_BASE, DAILY_CURRENCIES, MONTHLY_CURRENCIES
-from .exceptions import CurrencyNotFound
-from .utils import SingletonMeta, FormatMixin, WithRequests
+from ..exceptions import CurrencyNotFound
+from ..utils import SingletonMeta, FormatMixin, WithRequests
 
 LOG = getLogger(__name__)
 

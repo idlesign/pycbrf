@@ -6,8 +6,8 @@ from xml.etree import ElementTree
 
 from .constants import URL_BASE
 from .currencies import Currency, CURRENCIES
-from .exceptions import CurrencyNotFound, ExchangeRateNotFound, WrongArguments
-from .utils import FormatMixin, WithRequests
+from ..exceptions import CurrencyNotFound, ExchangeRateNotFound, WrongArguments
+from ..utils import FormatMixin, WithRequests
 
 LOG = getLogger(__name__)
 
