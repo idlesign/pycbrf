@@ -3,6 +3,8 @@ from typing import Union, Optional
 
 import requests
 
+TypeDateDef = Union[str, date, datetime]
+
 
 class WithRequests:
     """Mixin to perform HTTP requests."""
@@ -48,10 +50,34 @@ class FormatMixin:
         return f'{num}'.zfill(3)
 
     @staticmethod
-    def _datetime_from_string(date_: Union[str, date, datetime, None]) -> Optional[datetime]:
-        """Format date to datetime.datetime from string and datetime.date"""
-        if isinstance(date_, str):
-            date_ = datetime.strptime(date_, '%Y-%m-%d')
-        if isinstance(date_, date):
-            date_ = datetime(date_.year, date_.month, date_.day)
-        return date_
+    def _date_format(value: datetime) -> str:
+        """Format datetime into a string.
+
+        :param value:
+
+        """
+        return value.strftime('%d/%m/%Y')
+
+    @staticmethod
+    def _date_parse(value: str) -> datetime:
+        """Parse a string into a datetime.
+
+        :param value:
+
+        """
+        return datetime.strptime(value, '%d.%m.%Y')
+
+    @staticmethod
+    def _get_datetime(value: TypeDateDef) -> Optional[datetime]:
+        """Format date to datetime.datetime from string and datetime.date
+
+        :param value:
+
+        """
+        if isinstance(value, str):
+            value = datetime.strptime(value, '%Y-%m-%d')
+
+        elif isinstance(value, date):
+            value = datetime(value.year, value.month, value.day)
+
+        return value

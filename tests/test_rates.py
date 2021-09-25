@@ -33,10 +33,12 @@ def test_exchange_rates_extra():
     rates = ExchangeRates()
 
     assert len(rates) > 0
+    a = rates['USD']
+    a = 1
 
     assert rates['eur'].id == 'R01239'
-    assert rates['EUR'].name_ru == 'Евро'
-    assert rates['R01239'].name_eng == 'Euro'
+    assert rates['EUR'].currency.name_ru == 'Евро'
+    assert rates['R01239'].name == 'Евро'
     assert rates['r01239'].num == '978'
     assert rates['978'].code == 'EUR'
     assert rates[978].par == Decimal(1)
@@ -66,8 +68,8 @@ def test_exchange_rates_extra():
     assert rates['CAD'].rate == Decimal('57.5885')
 
     assert rates['usd'].id == 'R01235'
-    assert rates['USD'].name_ru == 'Доллар США'
-    assert rates['R01235'].name_eng == 'US Dollar'
+    assert rates['USD'].name == 'Доллар США'
+    assert rates['R01235'].currency.name_eng == 'US Dollar'
     assert rates['r01235'].num == '840'
     assert rates['840'].code == 'USD'
     assert rates[840].par == Decimal(1)
@@ -92,8 +94,8 @@ def test_exchange_rates_extra():
     assert rates['KZT'].rate == Decimal('0.173926')
 
     assert rates['mdl'].id == 'R01500'
-    assert rates['MDL'].name_ru == 'Молдавский лей'
-    assert rates['R01500'].name_eng == 'Moldova Lei'
+    assert rates['MDL'].name == 'Молдавский лей'
+    assert rates['R01500'].currency.name_eng == 'Moldova Lei'
     assert rates['r01500'].num == '498'
     assert rates['498'].code == 'MDL'
     assert rates[498].par == Decimal(10)

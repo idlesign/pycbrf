@@ -24,8 +24,8 @@ def test_exchange_rate_dynamics():
     # test with currency without dates, for today
     rates = ExchangeRateDynamics(currency='USD')
 
-    assert rates.date_from == today
-    assert rates.date_from == today
+    assert rates.since == today
+    assert rates.since == today
     assert len(rates) in (0, 1)
 
     # test with specific date
@@ -34,8 +34,8 @@ def test_exchange_rate_dynamics():
 
     assert len(rates) == 1
     assert rates[date_check].id == 'R01239'
-    assert rates[date_check.date()].name_ru == 'Евро'
-    assert rates['2021-08-24'].name_eng == 'Euro'
+    assert rates[date_check.date()].name == 'Евро'
+    assert rates['2021-08-24'].currency.name_eng == 'Euro'
     assert rates['2021-08-24'].num == '978'
     assert rates['2021-08-24'].code == 'EUR'
     assert rates['2021-08-24'].par == Decimal(1)
@@ -49,8 +49,8 @@ def test_exchange_rate_dynamics():
 
     assert len(rates) == 1
     assert rates['2021-08-10'].id == 'R01215'
-    assert rates[date_check].name_ru == 'Датская крона'
-    assert rates[datetime_check].name_eng == 'Danish Krone'
+    assert rates[date_check].name == 'Датская крона'
+    assert rates[datetime_check].currency.name_eng == 'Danish Krone'
     assert rates['2021-08-10'].num == '208'
     assert rates['2021-08-10'].code == 'DKK'
     assert rates['2021-08-10'].par == Decimal(1)

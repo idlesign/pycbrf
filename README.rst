@@ -19,7 +19,7 @@ Description
 
 Provides methods to get the following information:
 
-1. Exchange rates on various dates
+1. Exchange rates on various dates (including basic currencies data)
 2. Banks information (requisites, codes, numbers, etc.)
 
 
@@ -86,7 +86,17 @@ Python
             num='840',
             value=Decimal('65.5287'),
             par=Decimal('1'),
-            rate=Decimal('65.5287'))
+            rate=Decimal('65.5287'),
+            date=datetime(2016, 06, 25),
+            currency=Currency(
+                id='R01235',
+                name_eng='US Dollar',
+                name_ru='Доллар США',
+                num='840',
+                code='USD',
+                par=Decimal('1')
+            )
+        )
     '''
 
     banks = Banks()

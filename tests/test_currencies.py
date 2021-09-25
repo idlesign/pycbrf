@@ -20,7 +20,7 @@ def test_currencies():
         par=Decimal(1)
     )
 
-    assert lib.update_date is None
+    assert lib.updated is None
 
     with pytest.raises(CurrencyNotFound) as e:
         lib[None]
@@ -62,7 +62,7 @@ def test_currencies():
         code='FER',
         par=Decimal(1000)
     )
-    lib.add(fer)
+    lib.register(fer)
 
     assert lib['fer'].id == 'R99999'
     assert lib['FER'].name_ru == 'Лунный фертинг'
@@ -71,13 +71,13 @@ def test_currencies():
     assert lib['999'].code == 'FER'
     assert lib[999].par == Decimal(1000)
 
-    """test to CurrenicesLib.update()"""
+    # test to CurrenicesLib.update()
     lib.update()
     post_date = dt.datetime.now()
-    assert lib.update_date < post_date
+    assert lib.updated < post_date
 
     lib.update()
-    assert lib.update_date > post_date
+    assert lib.updated > post_date
 
     # test with a very old date with a currency that is not in the Currencies
     # added by ExchangeRates automatically
@@ -90,8 +90,8 @@ def test_currencies():
     rates = ExchangeRates('2016-06-26', locale_en=True)
 
     assert rates['BYR'].id == 'R01090'
-    assert rates['byr'].name_ru == 'Belarussian Ruble'
-    assert rates['R01090'].name_eng == 'Belarussian Ruble'
+    assert rates['byr'].currency.name_ru == 'Belarussian Ruble'
+    assert rates['R01090'].name == 'Belarussian Ruble'
     assert rates['r01090'].num == '974'
     assert rates['974'].code == 'BYR'
     assert rates[974].par == Decimal(10000)

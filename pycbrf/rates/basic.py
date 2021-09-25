@@ -7,36 +7,26 @@ from xml.etree import ElementTree
 from .constants import URL_BASE
 from .currencies import Currency, CURRENCIES
 from ..exceptions import CurrencyNotFound, ExchangeRateNotFound, WrongArguments
-from ..utils import FormatMixin, WithRequests
+from ..utils import FormatMixin, WithRequests, TypeDateDef
 
 LOG = getLogger(__name__)
 
 
 class ExchangeRate(NamedTuple):
-    """Represents exchange rate for the currency on the date
+    """Represents exchange rate for the currency on the date."""
 
-    :param date: Date of the exchange rate.
-    :param currency: Currency for which the rate is fetched.
-    :param value: Official exchange rates on selected date against the ruble.
-    :param par: Nominal exchange rate.
-    :param rate: Reduced exchange rate rate = value / par.
-    """
+    date: datetime
+    """Exchange rate date."""
 
-    on_date: datetime
     currency: Currency
-    name: str  # exists for backward compatibility.
+    """The rate's currency ."""
+
+    name: str
+    """Currency name."""
 
     @property
     def id(self):
         return self.currency.id
-
-    @property
-    def name_ru(self):
-        return self.currency.name_ru
-
-    @property
-    def name_eng(self):
-        return self.currency.name_eng
 
     @property
     def code(self):
@@ -47,29 +37,34 @@ class ExchangeRate(NamedTuple):
         return self.currency.num
 
     value: Decimal
+    """Rate value for the ruble."""
+
     par: Decimal
+    """Rate nominal."""
+
     rate: Decimal
+    """Rate ration (rate = value / par)."""
 
 
 class ExchangeRates(WithRequests, FormatMixin):
 
-    def __init__(self, on_date: Union[str, date, datetime, None] = None, locale_en: bool = False):
+    def __init__(self, on_date: TypeDateDef = None, locale_en: bool = False):
         """Fetches exchange rates.
 
-        :Example:
+        .. code-block::
 
-        Various creation options are supported:
+            # Various creation options are supported:
 
-        rates = ExchangeRates()  # for today
-        rates = ExchangeRates(date(2021, 08, 24))
-        rates = ExchangeRates(on_date=datetime(2021, 08, 24, 0, 0))
-        rates = ExchangeRates('2016-06-26', locale_en=True)
+            rates = ExchangeRates()  # for today
+            rates = ExchangeRates(date(2021, 08, 24))
+            rates = ExchangeRates(on_date=datetime(2021, 08, 24, 0, 0))
+            rates = ExchangeRates('2016-06-26', locale_en=True)
 
-        Various indexing is supported:
+            # Various indexing is supported:
 
-        rates['USD']  # By ISO alpha code
-        rates['R01235']  # By internal Bank of Russia code
-        rates['840']  # By ISO numeric code.
+            rates['USD']  # By ISO alpha code
+            rates['R01235']  # By internal Bank of Russia code
+            rates['840']  # By ISO numeric code.
 
         .. note:: The Central Bank of Russia does not change rates on weekends and holidays.
             The Sunday and Monday rates is set as equal as Saturday rate.
@@ -84,13 +79,13 @@ class ExchangeRates(WithRequests, FormatMixin):
         """
 
         if on_date:
-            on_date = self._datetime_from_string(on_date)
+            on_date = self._get_datetime(on_date)
         else:
             today = date.today()
             on_date = datetime(today.year, today.month, today.day)  # For backward compatibility, the time is 00:00
 
-        raw_data = self._get_data(on_date, locale_en)
-        parsed = self._parse(raw_data, locale_en)
+        raw_data = self._get_data(on_date, locale_en=locale_en)
+        parsed = self._parse(raw_data, locale_en=locale_en)
 
         self.date_requested = on_date
         """Date requested by user."""
@@ -102,12 +97,13 @@ class ExchangeRates(WithRequests, FormatMixin):
         """Rates fetched from server as a list."""
 
         self.dates_match: bool = (self.date_requested == self.date_received)
+        """Flag. True if the actual date equals the requested."""
 
     def __getitem__(self, item: Union[str, int, Currency]) -> Optional[ExchangeRate]:
         """Implement dictionary lookup
 
         :param item: Bank of Russia code, numeric or alphabetic currency code according to ISO, Currency instance
-        :return: The ExchangeRate instance for the requested currency
+
         """
         try:
             key: Optional[Currency] = CURRENCIES[item]
@@ -119,8 +115,8 @@ class ExchangeRates(WithRequests, FormatMixin):
         except ExchangeRateNotFound:
             return None  # return None, not an exception, is made for backward compatibility.
 
-    @staticmethod
-    def _parse(data: bytes, locale_en: bool) -> Dict[str, Union[datetime, Dict[Currency, ExchangeRate]]]:
+    @classmethod
+    def _parse(cls, data: bytes, *, locale_en: bool) -> Dict[str, Union[datetime, Dict[Currency, ExchangeRate]]]:
         """Parse raw XML strings to the dict of BetaExchangeRates"""
         LOG.debug('Parsing data ...')
 
@@ -128,7 +124,7 @@ class ExchangeRates(WithRequests, FormatMixin):
         meta = xml.attrib
 
         result = {
-            'date': datetime.strptime(meta['Date'], '%d.%m.%Y'),
+            'date': cls._date_parse(meta['Date']),
             'rates': {},
         }
 
@@ -146,19 +142,20 @@ class ExchangeRates(WithRequests, FormatMixin):
                 # The request for old information may contain a currency
                 # that has already been removed from the Currencies.
                 # In this case, add a new currency to Currencies.
-                currency = Currency(id=currency.attrib['ID'],
-                                    name_eng=props['Name'],
-                                    name_ru=props['Name'],
-                                    code=props['CharCode'],
-                                    num=props['NumCode'],
-                                    par=Decimal(props['Nominal']),
-                                    )
-                CURRENCIES.add(currency)
+                currency = Currency(
+                    id=currency.attrib['ID'],
+                    name_eng=props['Name'],
+                    name_ru=props['Name'],
+                    code=props['CharCode'],
+                    num=props['NumCode'],
+                    par=Decimal(props['Nominal']),
+                )
+                CURRENCIES.register(currency)
 
             name = currency.name_eng if locale_en else currency.name_ru
 
             result['rates'][currency] = ExchangeRate(
-                on_date=result['date'],
+                date=result['date'],
                 currency=currency,
                 name=name,
                 value=par_value,
@@ -171,12 +168,12 @@ class ExchangeRates(WithRequests, FormatMixin):
         return result
 
     @classmethod
-    def _get_data(cls, on_date: datetime, locale_en: bool) -> bytes:
+    def _get_data(cls, on_date: datetime, *, locale_en: bool) -> bytes:
         """Prepares parameters for the link and returns raw XML"""
         url = f"{URL_BASE}XML_daily{'_eng' if locale_en else ''}.asp"
 
         params = {
-            'date_req': on_date.strftime('%d/%m/%Y')
+            'date_req': cls._date_format(on_date),
         }
 
         LOG.debug(f'Getting exchange rates from {url} ...')
