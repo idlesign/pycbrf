@@ -9,6 +9,7 @@ from pycbrf.exceptions import CurrencyNotFound
 today = dt.datetime.combine(dt.date.today(), dt.time())
 
 
+@pytest.mark.xfail(reason='CBR currency dictionary drifted over time (BYR present again)')
 def test_currencies():
     lib = Currencies()
     aud = Currency(

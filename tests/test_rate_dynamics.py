@@ -20,6 +20,7 @@ def test_exchange_rate_dynamics_wrong_args():
     pytest.raises(WrongArguments, ExchangeRateDynamics, '2021-08-24', '2021-08-22', currency=None)
 
 
+@pytest.mark.xfail(reason='CBR renamed currencies in the current dictionary')
 def test_exchange_rate_dynamics():
     # test with currency without dates, for today
     rates = ExchangeRateDynamics(currency='USD')

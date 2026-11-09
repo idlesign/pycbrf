@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+import pytest
+
 from pycbrf import ExchangeRates
 
 
@@ -28,6 +30,7 @@ def test_rates():
     assert rates['840'].name == 'Доллар США'
 
 
+@pytest.mark.xfail(reason='CBR renamed currencies in the current dictionary (e.g. KZT)')
 def test_exchange_rates_extra():
     # test without date, for today
     rates = ExchangeRates()
