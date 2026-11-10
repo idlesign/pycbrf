@@ -1,3 +1,0 @@
-[run]
-source = pycbrf/
-omit = pycbrf/cli.py
