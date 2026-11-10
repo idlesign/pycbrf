@@ -1,75 +1,50 @@
-pycbrf changelog
-================
+# pycbrf changelog
 
+### v1.1.0 [2021-01-19]
+* ++ Banks. Added accounts information.
 
-v1.1.0 [2021-01-19]
--------------------
-+ Banks. Added accounts information.
+### v1.0.1 [2020-12-09]
+* ** Made Python 3.9 compatible.
 
+### v1.0.0 [2020-12-06]
+* !! Addressing unknown banks and rates no gives None instead of 'KeyError'.
+* !! Banks. Trying to fetch data on holidays now gives an umpty banks list instad of 'BadZipFile'.
+* !! Dropped support for Python < 3.6.
 
-v1.0.1 [2020-12-09]
--------------------
-* Made Python 3.9 compatible.
+### v0.5.0 [2020-12-05]
+* ++ Banks. Added detailed restrictions information.
+* ** Banks. Fixed KeyError 74: Added new participant type definition.
+* ** Dropped QA for Python 3.4 and 3.5.
 
+### v0.4.0 [2019-10-02]
+* ++ Now request timeout and user agent may be overridden.
+* ** Added QA for py3.7.
+* ** Dropped QA for py3.4.
 
-v1.0.0 [2020-12-06]
--------------------
-! Addressing unknown banks and rates no gives None instead of 'KeyError'.
-! Banks. Trying to fetch data on holidays now gives an umpty banks list instad of 'BadZipFile'.
-! Dropped support for Python < 3.6.
+### v0.3.0
+* ++ Banks. Added support for new XML (ED807) format.
+* ** CLI. Banks. Hide attributes without values.
 
+### v0.2.4
+* ** Banks. Swift data is now optional by default (see 'require_swift' parameter).
 
-v0.5.0 [2020-12-05]
--------------------
-+ Banks. Added detailed restrictions information.
-* Banks. Fixed KeyError 74: Added new participant type definition.
-* Dropped QA for Python 3.4 and 3.5.
+### v0.2.3
+* ** Fixed SWIFT info fetching.
 
+### v0.2.2
+* ** Banks. Workaround bogus 'term' values.
 
-v0.4.0 [2019-10-02]
--------------------
-+ Now request timeout and user agent may be overridden.
-* Added QA for py3.7.
-* Dropped QA for py3.4.
+### v0.2.1
+* ** Banks. Using case insensitive db names.
 
+### v0.2.0
+* !! Added dependency 'requests'.
+* !! CLI. Added dependency 'click'.
+* ++ CLI. Improved Windows compatibility.
+* ++ Implemented banks information extraction.
+* ** CLI. Improved py2 compatibility.
+* ** Dropped QA for py3.3, added for py3.6.
+* ** ExchangeRates now importable from package root.
 
-v0.3.0
-------
-+ Banks. Added support for new XML (ED807) format.
-* CLI. Banks. Hide attributes without values.
-
-
-v0.2.4
-------
-* Banks. Swift data is now optional by default (see 'require_swift' parameter).
-
-
-v0.2.3
-------
-* Fixed SWIFT info fetching.
-
-
-v0.2.2
-------
-* Banks. Workaround bogus 'term' values.
-
-
-v0.2.1
-------
-* Banks. Using case insensitive db names.
-
-
-v0.2.0
-------
-! Added dependency 'requests'.
-! CLI. Added dependency 'click'.
-+ CLI. Improved Windows compatibility.
-+ Implemented banks information extraction.
-* CLI. Improved py2 compatibility.
-* Dropped QA for py3.3, added for py3.6.
-* ExchangeRates now importable from package root.
-
-
-v0.1.0
-------
-+ Basic functionality.
+### v0.1.0
+* ++ Basic functionality.

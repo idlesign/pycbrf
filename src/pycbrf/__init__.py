@@ -1,9 +1,5 @@
 from .banks import Banks
-from .rates import *
-from .rates import ExchangeRates
+from .rates import ExchangeRate, ExchangeRates, Currencies, Currency, ExchangeRateDynamics
 
-VERSION = (1, 1, 0)
-"""Application version number tuple."""
 
-VERSION_STR = '.'.join(map(str, VERSION))
-"""Application version number string."""
+VERSION = "1.1.0"

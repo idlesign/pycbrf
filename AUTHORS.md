@@ -1,11 +1,8 @@
-pycbrf authors
-==============
+# pycbrf authors
 
 Created by Igor `idle sign` Starikov.
 
+## Contributors
 
-Contributors
-------------
-
-Alexander Shadchin <https://github.com/shadchin>
-Евгений Суханов <https://github.com/suhanoves>
+* Alexander Shadchin <https://github.com/shadchin>
+* Евгений Суханов <https://github.com/suhanoves>

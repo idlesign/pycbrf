@@ -1,8 +1,8 @@
 from datetime import date, datetime
 from decimal import Decimal
 from logging import getLogger
-from typing import Dict, NamedTuple, Optional, Union
-from xml.etree import ElementTree
+from typing import Dict, NamedTuple, Union
+from xml.etree import ElementTree as ET
 
 from .constants import URL_BASE
 from .currencies import Currency, CURRENCIES
@@ -99,14 +99,14 @@ class ExchangeRates(WithRequests, FormatMixin):
         self.dates_match: bool = (self.date_requested == self.date_received)
         """Flag. True if the actual date equals the requested."""
 
-    def __getitem__(self, item: Union[str, int, Currency]) -> Optional[ExchangeRate]:
+    def __getitem__(self, item: Union[str, int, Currency]) -> ExchangeRate | None:
         """Implement dictionary lookup
 
         :param item: Bank of Russia code, numeric or alphabetic currency code according to ISO, Currency instance
 
         """
         try:
-            key: Optional[Currency] = CURRENCIES[item]
+            key: Currency | None = CURRENCIES[item]
         except (WrongArguments, CurrencyNotFound):
             return None  # return None, not an exception, is made for backward compatibility.
 
@@ -120,7 +120,7 @@ class ExchangeRates(WithRequests, FormatMixin):
         """Parse raw XML strings to the dict of BetaExchangeRates"""
         LOG.debug('Parsing data ...')
 
-        xml = ElementTree.fromstring(data)
+        xml = ET.fromstring(data)
         meta = xml.attrib
 
         result = {
@@ -163,7 +163,7 @@ class ExchangeRates(WithRequests, FormatMixin):
                 rate=par_value / par,
             )
 
-        LOG.debug(f"Parsed: {len(result['rates'])} currencies")
+        LOG.debug('Parsed: %s currencies', len(result['rates']))
 
         return result
 
@@ -176,7 +176,7 @@ class ExchangeRates(WithRequests, FormatMixin):
             'date_req': cls._date_format(on_date),
         }
 
-        LOG.debug(f'Getting exchange rates from {url} ...')
+        LOG.debug('Getting exchange rates from %s ...', url)
 
         response = cls._get_response(url=url, params=params)
         data = response.content

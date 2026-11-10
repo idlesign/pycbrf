@@ -36,8 +36,7 @@ def test_exchange_rates_extra():
     rates = ExchangeRates()
 
     assert len(rates) > 0
-    a = rates['USD']
-    a = 1
+    assert rates['USD']
 
     assert rates['eur'].id == 'R01239'
     assert rates['EUR'].currency.name_ru == 'Евро'

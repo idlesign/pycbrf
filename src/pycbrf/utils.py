@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Union, Optional
+from typing import Union
 
 import requests
 
@@ -68,7 +68,7 @@ class FormatMixin:
         return datetime.strptime(value, '%d.%m.%Y')
 
     @staticmethod
-    def _get_datetime(value: TypeDateDef) -> Optional[datetime]:
+    def _get_datetime(value: TypeDateDef) -> datetime | None:
         """Format date to datetime.datetime from string and datetime.date
 
         :param value:

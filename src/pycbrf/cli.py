@@ -2,11 +2,11 @@ from operator import attrgetter
 
 import click
 
-from . import VERSION_STR, ExchangeRates, Banks
+from . import VERSION, Banks, ExchangeRates
 
 
 @click.group()
-@click.version_option(version=VERSION_STR)
+@click.version_option(version=VERSION)
 def entry_point():
     """Tools to query Bank of Russia."""
 

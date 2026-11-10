@@ -1,19 +1,12 @@
-pycbrf
-======
-https://github.com/idlesign/pycbrf
+# pycbrf
 
-.. image:: https://img.shields.io/pypi/v/pycbrf.svg
-    :target: https://pypi.python.org/pypi/pycbrf
+<https://github.com/idlesign/pycbrf>
 
-.. image:: https://img.shields.io/pypi/l/pycbrf.svg
-    :target: https://pypi.python.org/pypi/pycbrf
+[![release](https://img.shields.io/pypi/v/pycbrf.svg)](https://pypi.python.org/pypi/pycbrf)
+[![lic](https://img.shields.io/pypi/l/pycbrf.svg)](https://pypi.python.org/pypi/pycbrf)
+[![coverage](https://img.shields.io/coveralls/idlesign/pycbrf/master.svg)](https://coveralls.io/r/idlesign/pycbrf)
 
-.. image:: https://img.shields.io/coveralls/idlesign/pycbrf/master.svg
-    :target: https://coveralls.io/r/idlesign/pycbrf
-
-
-Description
------------
+## Description
 
 *Tools to query Bank of Russia*
 
@@ -22,90 +15,58 @@ Provides methods to get the following information:
 1. Exchange rates on various dates (including basic currencies data)
 2. Banks information (requisites, codes, numbers, etc.)
 
+## Requirements
 
-Requirements
-------------
+* Python 3.10+
+* `requests` Python package
+* `dbf_light` Python package (to support legacy Bank format)
+* `click` package (optional, for CLI)
 
-* Python 3.6+
-* ``requests`` Python package
-* ``dbf_light`` Python package (to support legacy Bank format)
-* ``click`` package (optional, for CLI)
+## Usage
 
+### CLI
 
-Usage
------
+```shell
+$ pycbrf --help
 
-CLI
-~~~
+$ pycbrf rates
+$ pycbrf rates -d 2016-06-26 -c USD
 
-.. code-block:: bash
+$ pycbrf banks
+$ pycbrf banks -b 045004641
+```
 
-    $ pycbrf --help
+CLI requires `click` package to be installed. Can be installed with `pycbrf` using:
 
-    $ pycbrf rates
-    $ pycbrf rates -d 2016-06-26 -c USD
+```shell
+$ pip install pycbrf[cli]
+```
 
-    $ pycbrf banks
-    $ pycbrf banks -b 045004641
+### Python
 
-
-CLI requires ``click`` package to be installed. Can be installed with ``pycbrf`` using:
-
-.. code-block:: bash
-
-    $ pip install pycbrf[cli]
-
+```python
+from pycbrf import ExchangeRates, Banks
 
 
-Python
-~~~~~~
+rates = ExchangeRates('2016-06-26', locale_en=True)
 
-.. code-block:: python
+rates.date_requested  # 2016-06-26 00:00:00
+rates.date_received  # 2016-06-25 00:00:00
+rates.dates_match  # False
+# Note: 26th of June was a holiday, data is taken from the 25th.
 
-    from pycbrf import ExchangeRates, Banks
+# Various indexing is supported:
+rates['USD'].name  # US Dollar
+rates['R01235'].name  # US Dollar
+rates['840'].name  # US Dollar
 
+banks = Banks()
+bank = banks['045004641']
+assert bank
+bank.swift  # SABRRUMMNH1
+bank.corr  # 30101810500000000641
 
-    rates = ExchangeRates('2016-06-26', locale_en=True)
-
-    rates.date_requested  # 2016-06-26 00:00:00
-    rates.date_received  # 2016-06-25 00:00:00
-    rates.dates_match  # False
-    # Note: 26th of June was a holiday, data is taken from the 25th.
-
-    # Various indexing is supported:
-    rates['USD'].name  # US Dollar
-    rates['R01235'].name  # US Dollar
-    rates['840'].name  # US Dollar
-
-    rates['USD']
-    '''
-        ExchangeRate(
-            id='R01235',
-            name='US Dollar',
-            code='USD',
-            num='840',
-            value=Decimal('65.5287'),
-            par=Decimal('1'),
-            rate=Decimal('65.5287'),
-            date=datetime(2016, 06, 25),
-            currency=Currency(
-                id='R01235',
-                name_eng='US Dollar',
-                name_ru='Доллар США',
-                num='840',
-                code='USD',
-                par=Decimal('1')
-            )
-        )
-    '''
-
-    banks = Banks()
-    bank = banks['045004641']
-    assert bank
-    bank.swift  # SABRRUMMNH1
-    bank.corr  # 30101810500000000641
-
-    bank_annotated = Banks.annotate([bank])[0]
-    for title, value in bank_annotated.items():
-        print(f'{title}: {value}')
-
+bank_annotated = Banks.annotate([bank])[0]
+for title, value in bank_annotated.items():
+    print(f'{title}: {value}')
+```

@@ -1,8 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
 from logging import getLogger
-from typing import Dict, NamedTuple, Tuple, Union, Optional
-from xml.etree import ElementTree
+from typing import Dict, NamedTuple, Tuple, Union
+from xml.etree import ElementTree as ET
 
 from .constants import URL_BASE, DAILY_CURRENCIES, MONTHLY_CURRENCIES
 from ..exceptions import CurrencyNotFound
@@ -57,7 +57,7 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
     """Represents known currencies data."""
 
     def __init__(self):
-        self.updated: Optional[datetime] = None
+        self.updated: datetime | None = None
         """Date of loading the latest information from www.cbr.ru"""
 
         self.currencies: TypeCurrencyIndex = self._parse((DAILY_CURRENCIES, MONTHLY_CURRENCIES))
@@ -74,7 +74,7 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
         try:
             currency = self.currencies[item]
         except KeyError:
-            raise CurrencyNotFound()
+            raise CurrencyNotFound from None
 
         return currency
 
@@ -97,7 +97,7 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
         """Get XML byte string from www.cbr.ru for daily and monthly update currencies."""
         url = f"{URL_BASE}XML_valFull.asp"
 
-        LOG.debug(f'Getting update currencies from {url} ...')
+        LOG.debug('Getting update currencies from %s ...', url)
 
         daily_update_response = cls._get_response(url)
         daily_update_data = daily_update_response.content
@@ -133,7 +133,7 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
         format_num = self._format_num_code
 
         for sub_data in data:
-            root = ElementTree.fromstring(sub_data)
+            root = ET.fromstring(sub_data)
 
             for child in root:
                 props = {}
@@ -159,7 +159,7 @@ class Currencies(WithRequests, FormatMixin, metaclass=SingletonMeta):
                 counter += 1
                 currencies.update(index(currency))
 
-        LOG.debug(f"Parsed: {counter} currencies")
+        LOG.debug('Parsed: %s currencies', counter)
         return currencies
 
     def __str__(self):

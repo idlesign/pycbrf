@@ -1,31 +1,25 @@
-pycbrf installation
-===================
+# pycbrf installation
 
+Python `pip` package is required to install `pycbrf`.
 
-Python ``pip`` package is required to install pycbrf.
+## From sources
 
+Use the following command line to install `pycbrf` from sources directory (containing `pyproject.toml`):
 
-From sources
-------------
+```shell
+pip install .
+```
 
+## From PyPI
 
-Use the following command line to install pycbrf from sources directory (containing setup.py):
+Alternatively you can install `pycbrf` from PyPI:
 
-    pip install .
-
-or
-
-    python setup.py install
-
-
-From PyPI
----------
-
-Alternatively you can install pycbrf from PyPI:
-
-    pip install pycbrf
-
+```shell
+pip install pycbrf
+```
 
 Use `-U` flag for upgrade:
 
-    pip install -U pycbrf
+```shell
+pip install -U pycbrf
+```

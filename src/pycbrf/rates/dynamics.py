@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from logging import getLogger
 from typing import Dict, Tuple, Union
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 from .constants import URL_BASE
 from .currencies import Currency, CURRENCIES
@@ -91,7 +91,7 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
         try:
             return self.rates[key]
         except KeyError:
-            raise ExchangeRateNotFound()
+            raise ExchangeRateNotFound from None
 
     def _check_and_convert_args(
             self,
@@ -142,7 +142,7 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
         """Parse raw XML strings with rate dynamics to the dict of ExchangeRate"""
         LOG.debug('Parsing data ...')
 
-        xml = ElementTree.fromstring(data)
+        xml = ET.fromstring(data)
 
         result = {}
 
@@ -166,7 +166,7 @@ class ExchangeRateDynamics(WithRequests, FormatMixin):
                 rate=value / par,
             )
 
-        LOG.debug(f"Parsed: {len(result)} days")
+        LOG.debug('Parsed: %s days', len(result))
 
         return result
 

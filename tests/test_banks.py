@@ -1,4 +1,4 @@
-from os import path
+from pathlib import Path
 
 import pytest
 
@@ -17,7 +17,7 @@ def test_banks(legacy, monkeypatch, datafix_readbin):
     def get_archive(cls, url):
         if legacy:
 
-            basename = path.basename(url)
+            basename = Path(url).name
 
             if basename == 'bik_swift-bik.zip':
                 return datafix_readbin(basename, io=True)

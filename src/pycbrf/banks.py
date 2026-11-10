@@ -1,9 +1,9 @@
 import re
-from datetime import datetime
+from datetime import date, datetime
 from io import BytesIO
 from logging import getLogger
-from typing import NamedTuple, List, Union, Optional, Set
-from xml.etree import ElementTree
+from typing import NamedTuple, List, Union
+from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
 from dbf_light import Dbf
@@ -31,9 +31,9 @@ class BankLegacy(NamedTuple):
     address: str
     rkc_bic: str
     term: int
-    date_added: datetime.date
-    date_updated: Optional[datetime.date]
-    date_change: Optional[datetime.date]
+    date_added: date
+    date_updated: date | None
+    date_change: date | None
     mfo: str
     corr: str
     corr_bik: str
@@ -45,8 +45,8 @@ class BankLegacy(NamedTuple):
     type: NamedTuple
     pay_type: NamedTuple
     control_code: str
-    control_date: Optional[datetime.date]
-    swift: Optional[str]
+    control_date: date | None
+    swift: str | None
 
 
 class Bank(NamedTuple):
@@ -87,15 +87,15 @@ class Account:
         'UTRA': 'Единый казначейский счёт',
     }
 
-    __slots__ = ['number', 'type', 'type_str', 'date_added', 'date_removed', 'restrictions']
+    __slots__ = ['date_added', 'date_removed', 'number', 'restrictions', 'type', 'type_str']
 
     def __init__(
         self,
         *,
         number: str,
         type: str,
-        date_added: Optional[datetime.date],
-        date_removed: Optional[datetime.date],
+        date_added: date | None,
+        date_removed: date | None,
         restrictions: List['Restriction'],
     ):
         self.number = number
@@ -115,7 +115,7 @@ class Account:
 class Restriction:
     """Represents a restriction imposed on an institution."""
 
-    __slots__ = ['code', 'date', 'account', 'title']
+    __slots__ = ['account', 'code', 'date', 'title']
 
     codes = {
         'URRS': 'Ограничение предоставления сервиса срочного перевода',
@@ -131,7 +131,7 @@ class Restriction:
 
     """
 
-    def __init__(self, *, code: str, date: datetime.date, account: str = ''):
+    def __init__(self, *, code: str, date: date, account: str = ''):
         self.code = code
 
         self.date = date
@@ -147,7 +147,7 @@ class Restriction:
 
 class Banks(WithRequests):
 
-    def __init__(self, on_date: Union[datetime, str] = None):
+    def __init__(self, on_date: Union[datetime, str, None] = None):
         """Fetches BIC data.
 
         :param on_date: Date to get data for.
@@ -161,11 +161,11 @@ class Banks(WithRequests):
         on_date = on_date or datetime.now()
         legacy = on_date < datetime(2018, 7, 1)
 
-        self.banks: Union[List['Bank'], List['BankLegacy']] = self._get_data(on_date=on_date, legacy=legacy)
+        self.banks: Union[List[Bank], List[BankLegacy]] = self._get_data(on_date=on_date, legacy=legacy)
         self.on_date = on_date
         self.legacy = legacy  # CB RF radically changed format from DBF (legacy) to XML.
 
-    def __getitem__(self, item: str) -> Optional[Union['Bank', 'BankLegacy']]:
+    def __getitem__(self, item: str) -> Union['Bank', 'BankLegacy'] | None:
 
         key = 'swift' if len(item) in {8, 11} else 'bic'
         indexed = {getattr(bank, key): bank for bank in self.banks}
@@ -269,8 +269,8 @@ class Banks(WithRequests):
         return annotated
 
     @classmethod
-    def _get_archive(cls, url: str) -> Optional[BytesIO]:
-        LOG.debug(f'Fetching data from {url} ...')
+    def _get_archive(cls, url: str) -> BytesIO | None:
+        LOG.debug('Fetching data from %s ...', url)
 
         response = cls._get_response(url, stream=True)
 
@@ -281,13 +281,13 @@ class Banks(WithRequests):
         return BytesIO(response.content)
 
     @classmethod
-    def _read_zipped_xml(cls, zipped: BytesIO) -> ElementTree:
+    def _read_zipped_xml(cls, zipped: BytesIO) -> ET.ElementTree:
 
         with ZipFile(zipped, 'r') as zip_:
             filename = zip_.namelist()[0]
 
             with zip_.open(filename) as f:
-                return ElementTree.fromstring(f.read())
+                return ET.fromstring(f.read())
 
     @classmethod
     def _get_data(cls, on_date: datetime, legacy: bool = False) -> Union[List['Bank'], List['BankLegacy']]:
@@ -432,8 +432,7 @@ class Banks(WithRequests):
     @classmethod
     def _read_zipped_db(cls, zipped: BytesIO, filename: str):
         with Dbf.open_zip(filename, zipped, case_sensitive=False) as dbf:
-            for row in dbf:
-                yield row
+            yield from dbf
 
     @classmethod
     def _get_data_dbf(cls, on_date: datetime) -> List['BankLegacy']:
